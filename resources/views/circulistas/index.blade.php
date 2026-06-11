@@ -2,6 +2,58 @@
 
 @section('content')
 
+<style>
+    @media print {
+        /* Ocultar barra de búsqueda, navegación, botones y paginación */
+        header, footer, nav, .no-print, button, form, .modal, .modal-backdrop, #pagination-container, .border-b, a[href*="create"] {
+            display: none !important;
+        }
+        
+        /* Ajustar contenedor y fondo */
+        body, html, main, .max-w-7xl, #yield-content {
+            background: #fff !important;
+            color: #000 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .shadow-sm, .shadow-md, .shadow-lg, .ring-1, .ring-4 {
+            box-shadow: none !important;
+            ring: none !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        /* Ajustes de tablas */
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        th, td {
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 8px 12px !important;
+        }
+        /* Ocultar columna de acciones en impresión */
+        th:last-child, td:last-child {
+            display: none !important;
+        }
+    }
+</style>
+
+<!-- Cabecera de impresión exclusiva -->
+<div class="hidden print:block mb-8 border-b-2 border-slate-900 pb-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Padrón de Circulistas</h1>
+            <p class="text-xs text-slate-500">Movimiento de Círculos de Juventud (MCJ)</p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-lg font-bold text-indigo-600">Padrón Oficial</h2>
+            <p class="text-xs text-slate-400">Fecha de emisión: {{ now()->format('d/m/Y') }}</p>
+        </div>
+    </div>
+</div>
+
 <!-- Encabezado con estadísticas rápidas -->
 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
     <div>
@@ -15,9 +67,28 @@
             Total: {{ $circulistas->total() }} registros
         </span>
         
+        <!-- Botones de Exportación -->
+        <div class="flex items-center gap-1.5 no-print">
+            <button onclick="exportToCSV()" 
+                    title="Exportar a CSV"
+                    class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer">
+                CSV
+            </button>
+            <button onclick="exportToExcel()" 
+                    title="Exportar a Excel"
+                    class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer">
+                Excel
+            </button>
+            <button onclick="exportToPDF()" 
+                    title="Imprimir / Guardar PDF"
+                    class="inline-flex items-center justify-center rounded-lg bg-indigo-50 border border-indigo-100 p-2 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 cursor-pointer">
+                PDF
+            </button>
+        </div>
+
         <!-- Botón Nuevo -->
         <a href="{{ route('circulistas.create') }}"
-           class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+           class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-100 transition hover:bg-indigo-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 no-print">
             <svg class="h-4.5 w-4.5 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
@@ -287,6 +358,121 @@
             loadResults(link.href);
         }
     });
+
+    function getTableData() {
+        const table = document.querySelector('#live-search-container table');
+        if (!table) return null;
+
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim()).slice(0, 4); // Ignorar columna "Acciones"
+
+        const data = rows.map(row => {
+            const cols = Array.from(row.querySelectorAll('td'));
+            if (cols.length < 4) return null;
+
+            // Columna 1: Apellido y Nombre
+            const nameDiv = cols[0].querySelector('div.font-semibold');
+            const name = nameDiv ? nameDiv.textContent.trim() : cols[0].textContent.trim();
+            const nacDiv = cols[0].querySelector('div.text-xs');
+            const nac = nacDiv ? nacDiv.textContent.trim() : '';
+            const fullName = nac ? `${name} (${nac})` : name;
+
+            // Columna 2: Contacto
+            const phoneDiv = cols[1].querySelector('div.text-sm');
+            const phone = phoneDiv ? phoneDiv.textContent.trim() : '';
+            const emailDiv = cols[1].querySelector('div.text-xs');
+            const email = emailDiv ? emailDiv.textContent.trim() : '';
+            const contact = [phone, email].filter(Boolean).join(' | ');
+
+            // Columna 3: Ubicación
+            const locDiv = cols[2].querySelector('div');
+            const loc = locDiv ? locDiv.textContent.trim() : '';
+            const provDiv = cols[2].querySelector('div.text-xs');
+            const prov = provDiv ? provDiv.textContent.trim() : '';
+            const location = [loc, prov].filter(Boolean).join(', ');
+
+            // Columna 4: Estado
+            const stateSpan = cols[3].querySelector('span');
+            const state = stateSpan ? stateSpan.textContent.trim() : '';
+
+            return [fullName, contact, location, state];
+        }).filter(Boolean);
+
+        return { headers, data };
+    }
+
+    function exportToCSV() {
+        const tableData = getTableData();
+        if (!tableData) return;
+
+        let csvContent = "";
+        csvContent += tableData.headers.join(";") + "\n";
+        tableData.data.forEach(row => {
+            const cleanRow = row.map(val => {
+                let cleanVal = val.replace(/"/g, '""');
+                return `"${cleanVal}"`;
+            });
+            csvContent += cleanRow.join(";") + "\n";
+        });
+
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `padron_circulistas.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function exportToExcel() {
+        const tableData = getTableData();
+        if (!tableData) return;
+
+        let excelContent = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+            <meta charset="utf-8">
+            <style>
+                table { border-collapse: collapse; }
+                th { background-color: #f1f5f9; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; }
+                td { border: 1px solid #cbd5e1; padding: 8px; }
+            </style>
+        </head>
+        <body>
+            <h2>Padrón de Circulistas - MCJ</h2>
+            <table>
+                <thead>
+                    <tr>
+                        ${tableData.headers.map(h => `<th>${h}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${tableData.data.map(row => `
+                        <tr>
+                            ${row.map(val => `<td>${val}</td>`).join('')}
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </body>
+        </html>`;
+
+        const blob = new Blob(["\uFEFF" + excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `padron_circulistas.xls`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function exportToPDF() {
+        window.print();
+    }
 </script>
 
 @endsection

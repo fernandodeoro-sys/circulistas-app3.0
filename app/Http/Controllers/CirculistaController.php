@@ -17,13 +17,24 @@ class CirculistaController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->input('search');
-            $query->where(function ($q) use ($search) {
-                $q->where('nombre', 'ilike', "%{$search}%")
-                  ->orWhere('apellido', 'ilike', "%{$search}%")
-                  ->orWhere('email', 'ilike', "%{$search}%")
-                  ->orWhere('localidad', 'ilike', "%{$search}%")
-                  ->orWhere('provincia', 'ilike', "%{$search}%");
-            });
+            // Reemplazar comas por espacios para permitir búsquedas como "Alvarez, María Alejandra"
+            $searchClean = str_replace(',', ' ', $search);
+            // Dividir por espacios y filtrar términos vacíos
+            $words = array_filter(explode(' ', $searchClean));
+
+            if (!empty($words)) {
+                $query->where(function ($q) use ($words) {
+                    foreach ($words as $word) {
+                        $q->where(function ($subQ) use ($word) {
+                            $subQ->where('nombre', 'ilike', "%{$word}%")
+                                 ->orWhere('apellido', 'ilike', "%{$word}%")
+                                 ->orWhere('email', 'ilike', "%{$word}%")
+                                 ->orWhere('localidad', 'ilike', "%{$word}%")
+                                 ->orWhere('provincia', 'ilike', "%{$word}%");
+                        });
+                    }
+                });
+            }
         }
 
         $circulistas = $query->orderBy('apellido')
@@ -143,6 +154,12 @@ class CirculistaController extends Controller
     public function show(string $id)
     {
         $circulista = Circulista::with(['participaciones.evento.tipoEvento', 'participaciones.rol'])->findOrFail($id);
+
+        // Ordenar las participaciones por la fecha del evento de forma descendente (más recientes primero)
+        $circulista->setRelation('participaciones', $circulista->participaciones->sortByDesc(function ($participacion) {
+            return $participacion->evento->fecha_inicio ? $participacion->evento->fecha_inicio->timestamp : 0;
+        }));
+
         return view('circulistas.show', compact('circulista'));
     }
 

@@ -2,8 +2,66 @@
 
 @section('content')
 
+<style>
+    @media print {
+        /* Ocultar elementos no deseados */
+        header, footer, nav, .no-print, button, form, .modal, .modal-backdrop, a[href*="edit"], a[href*="index"] {
+            display: none !important;
+        }
+        
+        /* Ajustar contenedor y fondo */
+        body, html, main, .max-w-7xl, #yield-content {
+            background: #fff !important;
+            color: #000 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .shadow-sm, .shadow-md, .shadow-lg, .ring-1, .ring-4 {
+            box-shadow: none !important;
+            ring: none !important;
+            border-color: #cbd5e1 !important;
+        }
+
+        /* Hacer el grid de una sola columna y expandir */
+        .grid {
+            display: block !important;
+        }
+        
+        .lg\:col-span-1, .lg\:col-span-2 {
+            width: 100% !important;
+            margin-bottom: 2rem !important;
+        }
+
+        /* Ajustes de tablas */
+        table {
+            width: 100% !important;
+            border-collapse: collapse !important;
+        }
+        th, td {
+            border-bottom: 1px solid #e2e8f0 !important;
+            padding: 8px 12px !important;
+        }
+    }
+</style>
+
+<!-- Cabecera de impresión exclusiva -->
+<div class="hidden print:block mb-8 border-b-2 border-slate-900 pb-4">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-2xl font-bold text-slate-900">Ficha del Circulista</h1>
+            <p class="text-xs text-slate-500">Movimiento de Círculos de Juventud (MCJ)</p>
+        </div>
+        <div class="text-right">
+            <h2 class="text-lg font-bold text-indigo-600">Padrón Oficial</h2>
+            <p class="text-xs text-slate-400">Fecha de emisión: {{ now()->format('d/m/Y') }}</p>
+        </div>
+    </div>
+</div>
+
 <!-- Botón de Volver -->
-<div class="mb-6 flex items-center justify-between">
+<div class="mb-6 flex items-center justify-between no-print">
     <a href="{{ route('circulistas.index') }}" class="inline-flex items-center gap-2 text-sm font-medium text-slate-500 hover:text-slate-900 transition">
         <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
@@ -180,8 +238,27 @@
         </div>
 
         <!-- Historial de Participaciones -->
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
-            <h3 class="text-base font-bold text-slate-900 border-b border-slate-100 pb-3">Historial de Participaciones</h3>
+        <div id="historial-card" class="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3">
+                <h3 class="text-base font-bold text-slate-900">Historial de Participaciones</h3>
+                
+                <!-- Botones de Exportación -->
+                <div class="flex items-center gap-2 no-print">
+                    <span class="text-xs text-slate-400 font-medium">Exportar:</span>
+                    <button onclick="exportToCSV()" 
+                            class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer">
+                        CSV
+                    </button>
+                    <button onclick="exportToExcel()" 
+                            class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer">
+                        Excel
+                    </button>
+                    <button onclick="exportToPDF()" 
+                            class="inline-flex items-center justify-center rounded-lg bg-indigo-50 border border-indigo-100 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 cursor-pointer">
+                        PDF
+                    </button>
+                </div>
+            </div>
             @if($circulista->participaciones->isEmpty())
                 <p class="text-sm italic text-slate-400">Este circulista aún no ha participado en ningún evento.</p>
             @else
@@ -249,6 +326,122 @@
         </div>
 
     </div>
+
+</div>
+
+<script>
+function getTableData() {
+    const table = document.querySelector('#historial-card table');
+    if (!table) return null;
+
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+
+    const data = rows.map(row => {
+        const cols = Array.from(row.querySelectorAll('td'));
+        
+        // Columna 1: Evento
+        const eventNameLink = cols[0].querySelector('a');
+        const eventName = eventNameLink ? eventNameLink.textContent.trim() : cols[0].textContent.trim();
+        const eventPlaceSpan = cols[0].querySelector('span');
+        const eventPlace = eventPlaceSpan ? eventPlaceSpan.textContent.trim() : '';
+        const fullEvent = eventPlace ? `${eventName} (${eventPlace})` : eventName;
+
+        // Columna 2: Rol
+        const rolSpan = cols[1].querySelector('span');
+        const rol = rolSpan ? rolSpan.textContent.trim() : cols[1].textContent.trim();
+
+        // Columna 3: Grupo
+        const grupo = cols[2].textContent.trim();
+
+        // Columna 4: Fecha
+        const fecha = cols[3].textContent.trim();
+
+        return [fullEvent, rol, grupo, fecha];
+    });
+
+    return { headers, data };
+}
+
+function exportToCSV() {
+    const tableData = getTableData();
+    if (!tableData) return;
+
+    let csvContent = "";
+    // Cabecera
+    csvContent += tableData.headers.join(";") + "\n";
+    // Filas
+    tableData.data.forEach(row => {
+        const cleanRow = row.map(val => {
+            let cleanVal = val.replace(/"/g, '""');
+            return `"${cleanVal}"`;
+        });
+        csvContent += cleanRow.join(";") + "\n";
+    });
+
+    // Agregar BOM para compatibilidad UTF-8 con Excel
+    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    
+    const name = "{{ Str::slug($circulista->nombre . '_' . $circulista->apellido) }}";
+    link.setAttribute("href", url);
+    link.setAttribute("download", `historial_${name}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportToExcel() {
+    const tableData = getTableData();
+    if (!tableData) return;
+
+    let excelContent = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+    <head>
+        <meta charset="utf-8">
+        <style>
+            table { border-collapse: collapse; }
+            th { background-color: #f1f5f9; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; }
+            td { border: 1px solid #cbd5e1; padding: 8px; }
+        </style>
+    </head>
+    <body>
+        <h2>Historial de Participaciones - {{ $circulista->nombre }} {{ $circulista->apellido }}</h2>
+        <table>
+            <thead>
+                <tr>
+                    ${tableData.headers.map(h => `<th>${h}</th>`).join('')}
+                </tr>
+            </thead>
+            <tbody>
+                ${tableData.data.map(row => `
+                    <tr>
+                        ${row.map(val => `<td>${val}</td>`).join('')}
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+    </body>
+    </html>`;
+
+    const blob = new Blob(["\uFEFF" + excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    const name = "{{ Str::slug($circulista->nombre . '_' . $circulista->apellido) }}";
+    link.setAttribute("href", url);
+    link.setAttribute("download", `historial_${name}.xls`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function exportToPDF() {
+    window.print();
+}
+</script>
 
 </div>
 
