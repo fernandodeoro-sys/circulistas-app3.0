@@ -175,15 +175,38 @@
                 Total: {{ $evento->participaciones->count() }} personas registradas
             </p>
         </div>
-        <button type="button" 
-                data-bs-toggle="modal" 
-                data-bs-target="#addParticipantModal"
-                class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
-            <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Agregar Participante
-        </button>
+        <div class="flex flex-wrap items-center gap-2">
+            <!-- Imprimir Circular Retiro -->
+            <a href="{{ route('eventos.circular-retiro', $evento->id) }}" 
+               target="_blank"
+               class="inline-flex items-center justify-center rounded-xl border border-indigo-200 bg-indigo-50 px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100">
+                <svg class="-ml-0.5 mr-1.5 h-4.5 w-4.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9v4a2 2 0 002 2zm8-9v2m-5-2v2m-5-2v2" />
+                </svg>
+                Circular Retiro
+            </a>
+
+            <!-- Imprimir Circular Cocina -->
+            <a href="{{ route('eventos.circular-cocina', $evento->id) }}" 
+               target="_blank"
+               class="inline-flex items-center justify-center rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 shadow-sm transition hover:bg-amber-100">
+                <svg class="-ml-0.5 mr-1.5 h-4.5 w-4.5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9v4a2 2 0 002 2zm8-9v2m-5-2v2m-5-2v2" />
+                </svg>
+                Circular Cocina
+            </a>
+
+            <!-- Agregar Participante -->
+            <button type="button" 
+                    data-bs-toggle="modal" 
+                    data-bs-target="#addParticipantModal"
+                    class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-500">
+                <svg class="-ml-0.5 mr-1.5 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3m0 0v3m0-3h3m-3 0H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Agregar Participante
+            </button>
+        </div>
     </div>
 
     @if($evento->participaciones->isEmpty())

@@ -11,6 +11,10 @@ Route::get('/', function () {
 });
 Route::post('circulistas/verificar-duplicado', [CirculistaController::class, 'verificarDuplicado'])->name('circulistas.verificarDuplicado');
 Route::resource('circulistas', CirculistaController::class);
+
+Route::get('eventos/{evento}/circular-retiro', [EventoController::class, 'circularRetiro'])->name('eventos.circular-retiro');
+Route::get('eventos/{evento}/circular-cocina', [EventoController::class, 'circularCocina'])->name('eventos.circular-cocina');
 Route::resource('eventos', EventoController::class);
+
 Route::get('busqueda-avanzada', [BusquedaController::class, 'index'])->name('busqueda.avanzada');
 Route::resource('participaciones', ParticipacionController::class)->only(['store', 'update', 'destroy']);

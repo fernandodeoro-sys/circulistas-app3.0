@@ -183,4 +183,72 @@ class EventoController extends Controller
         return redirect()->route('eventos.index')
             ->with('success', 'Evento eliminado exitosamente.');
     }
+
+    /**
+     * Show the printable circular of the retreat.
+     */
+    public function circularRetiro(string $id)
+    {
+        $evento = Evento::with(['tipoEvento', 'participaciones.circulista', 'participaciones.rol'])->findOrFail($id);
+
+        $participaciones = $evento->participaciones;
+
+        // Asesores (Asesor, Vice Asesor)
+        $asesores = $participaciones->filter(function($p) {
+            return in_array($p->rol_id, [9, 15]) || str_contains(strtolower($p->rol->nombre ?? ''), 'asesor');
+        });
+
+        // Rectores
+        $rectores = $participaciones->filter(function($p) {
+            return $p->rol_id == 3 || strtolower($p->rol->nombre ?? '') == 'rector';
+        });
+
+        // Vice Rectores
+        $vicerectores = $participaciones->filter(function($p) {
+            return $p->rol_id == 4 || strtolower($p->rol->nombre ?? '') == 'vice rector';
+        });
+
+        // Asistentes y Circulistas
+        $restoParticipantes = $participaciones->reject(function($p) {
+            return in_array($p->rol_id, [3, 4, 6, 7, 8, 9, 15]) 
+                || str_contains(strtolower($p->rol->nombre ?? ''), 'asesor')
+                || str_contains(strtolower($p->rol->nombre ?? ''), 'rector')
+                || str_contains(strtolower($p->rol->nombre ?? ''), 'cocina')
+                || str_contains(strtolower($p->rol->nombre ?? ''), 'cocinero');
+        });
+
+        // Agrupamos por patrulla/grupo
+        $grupos = $restoParticipantes->groupBy(function($p) {
+            return $p->grupo ?: 'Sin Patrulla';
+        });
+
+        return view('eventos.circular_retiro', compact('evento', 'asesores', 'rectores', 'vicerectores', 'grupos'));
+    }
+
+    /**
+     * Show the printable circular of the kitchen.
+     */
+    public function circularCocina(string $id)
+    {
+        $evento = Evento::with(['tipoEvento', 'participaciones.circulista', 'participaciones.rol'])->findOrFail($id);
+
+        $participaciones = $evento->participaciones;
+
+        // Jefe de Cocina
+        $jefesCocina = $participaciones->filter(function($p) {
+            return $p->rol_id == 6 || str_contains(strtolower($p->rol->nombre ?? ''), 'jefe');
+        });
+
+        // Cocinero
+        $cocineros = $participaciones->filter(function($p) {
+            return $p->rol_id == 7 || (str_contains(strtolower($p->rol->nombre ?? ''), 'cocinero') && !str_contains(strtolower($p->rol->nombre ?? ''), 'jefe') && !str_contains(strtolower($p->rol->nombre ?? ''), 'integrante'));
+        });
+
+        // Integrantes de Cocina
+        $integrantesCocina = $participaciones->filter(function($p) {
+            return $p->rol_id == 8 || str_contains(strtolower($p->rol->nombre ?? ''), 'integrante');
+        });
+
+        return view('eventos.circular_cocina', compact('evento', 'jefesCocina', 'cocineros', 'integrantesCocina'));
+    }
 }
