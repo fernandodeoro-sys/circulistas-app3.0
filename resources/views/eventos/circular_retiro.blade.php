@@ -189,6 +189,34 @@
         .btn-secondary:hover {
             background-color: #cbd5e1;
         }
+
+        /* Recuadro al pie de la tabla */
+        .footer-box {
+            margin-top: 25px;
+            border: 1.5px solid #000;
+            padding: 12px 15px;
+            text-align: center;
+        }
+
+        .footer-box p {
+            margin: 4px 0;
+            line-height: 1.4;
+        }
+
+        .footer-box .quote {
+            font-style: italic;
+            font-size: 11px;
+        }
+
+        .footer-box .verse {
+            font-size: 10px;
+            margin-bottom: 10px;
+        }
+
+        .footer-box .reminder, .footer-box .signature {
+            font-weight: bold;
+            font-size: 11.5px;
+        }
     </style>
 </head>
 <body>
@@ -233,31 +261,39 @@
         <table class="header-table">
             <tr>
                 <td class="header-logo-cell">
-                    <svg viewBox="0 0 100 100" style="width: 85px; height: 85px; color: #1e3a8a;">
-                        <!-- Outer Circles -->
-                        <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2"/>
-                        <circle cx="50" cy="50" r="41" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="1 1"/>
-                        
-                        <!-- Cross -->
-                        <path d="M 50 16 L 50 82 M 30 36 L 70 36" stroke="currentColor" stroke-width="3" fill="none"/>
-                        
-                        <!-- Pilgrim Figure -->
-                        <path d="M 49 53 C 47 57 44 62 46 66 L 41 78 M 46 66 L 51 78 M 49 53 C 51 53 53 50 51 47 C 49 44 46 47 49 53 Z" stroke="currentColor" stroke-width="1.5" fill="currentColor"/>
-                        <circle cx="51.5" cy="42" r="2.5" fill="currentColor"/>
-                        <!-- Pilgrim stick -->
-                        <path d="M 44 45 L 39 78" stroke="currentColor" stroke-width="1.2"/>
-                        
-                        <!-- Circular Text (Simulado para que quepa en SVG nativo sin dependencias) -->
-                        <path id="textPath" d="M 17 50 A 33 33 0 1 1 83 50" fill="none" />
-                        <text font-size="6.5" font-family="Arial" font-weight="bold" fill="currentColor">
-                            <textPath href="#textPath" startOffset="50%" text-anchor="middle">
-                                MOVIMIENTO CÍRCULOS DE JUVENTUD
-                            </textPath>
-                        </text>
-                        <text x="50" y="91" font-size="8" font-family="Arial" font-weight="bold" fill="currentColor" text-anchor="middle">
-                            EN CADENA
-                        </text>
-                    </svg>
+                    @if(file_exists(public_path('images/logo-mcj.png')))
+                        <img src="{{ asset('images/logo-mcj.png') }}" style="max-width: 85px; max-height: 85px;" alt="Logo MCJ">
+                    @elseif(file_exists(public_path('images/logo-mcj.jpg')))
+                        <img src="{{ asset('images/logo-mcj.jpg') }}" style="max-width: 85px; max-height: 85px;" alt="Logo MCJ">
+                    @elseif(file_exists(public_path('images/logo-mcj.svg')))
+                        <img src="{{ asset('images/logo-mcj.svg') }}" style="max-width: 85px; max-height: 85px;" alt="Logo MCJ">
+                    @else
+                        <svg viewBox="0 0 100 100" style="width: 85px; height: 85px; color: #1e3a8a;">
+                            <!-- Outer Circles -->
+                            <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="2"/>
+                            <circle cx="50" cy="50" r="41" fill="none" stroke="currentColor" stroke-width="0.5" stroke-dasharray="1 1"/>
+                            
+                            <!-- Cross -->
+                            <path d="M 50 16 L 50 82 M 30 36 L 70 36" stroke="currentColor" stroke-width="3" fill="none"/>
+                            
+                            <!-- Pilgrim Figure -->
+                            <path d="M 49 53 C 47 57 44 62 46 66 L 41 78 M 46 66 L 51 78 M 49 53 C 51 53 53 50 51 47 C 49 44 46 47 49 53 Z" stroke="currentColor" stroke-width="1.5" fill="currentColor"/>
+                            <circle cx="51.5" cy="42" r="2.5" fill="currentColor"/>
+                            <!-- Pilgrim stick -->
+                            <path d="M 44 45 L 39 78" stroke="currentColor" stroke-width="1.2"/>
+                            
+                            <!-- Circular Text (Simulado para que quepa en SVG nativo sin dependencias) -->
+                            <path id="textPath" d="M 17 50 A 33 33 0 1 1 83 50" fill="none" />
+                            <text font-size="6.5" font-family="Arial" font-weight="bold" fill="currentColor">
+                                <textPath href="#textPath" startOffset="50%" text-anchor="middle">
+                                    MOVIMIENTO CÍRCULOS DE JUVENTUD
+                                </textPath>
+                            </text>
+                            <text x="50" y="91" font-size="8" font-family="Arial" font-weight="bold" fill="currentColor" text-anchor="middle">
+                                EN CADENA
+                            </text>
+                        </svg>
+                    @endif
                 </td>
                 <td class="header-title-cell">
                     <h1 class="main-title">Movimiento Círculos de Juventud - San Juan</h1>
@@ -381,6 +417,14 @@
                 @endforeach
             </tbody>
         </table>
+
+        <!-- Recuadro al pie de la tabla -->
+        <div class="footer-box">
+            <p class="quote">"Nosotros hemos conocido el amor que Dios nos tiene y hemos creido en Él, Dios es amor, y el que permanece en el amor, permanece en Dios y Dios permanece en Él"</p>
+            <p class="verse">1°Jn 4,16</p>
+            <p class="reminder">No te olvides que Jesús te espera todos los Jueves 21hs en la Misa del Circulista.</p>
+            <p class="signature">-Casa del Circulista "Padre Juan Fanzolato"-</p>
+        </div>
 
     </div>
 
