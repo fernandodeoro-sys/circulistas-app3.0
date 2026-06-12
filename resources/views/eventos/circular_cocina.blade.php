@@ -131,10 +131,16 @@
             text-align: left;
         }
 
+        @page {
+            size: auto;
+            margin: 0mm;
+        }
+
         /* Estilos de Impresión */
         @media print {
             body {
-                margin: 10px;
+                margin: 0;
+                padding: 15mm 15mm;
                 font-size: 10px;
             }
             .no-print {

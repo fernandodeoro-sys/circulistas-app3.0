@@ -3,6 +3,11 @@
 @section('content')
 
 <style>
+    @page {
+        size: auto;
+        margin: 0mm;
+    }
+
     @media print {
         /* Ocultar elementos no deseados */
         header, footer, nav, .no-print, button, form, .modal, .modal-backdrop, a[href*="edit"], a[href*="index"] {
@@ -16,6 +21,10 @@
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+        }
+
+        body {
+            padding: 15mm !important;
         }
 
         .shadow-sm, .shadow-md, .shadow-lg, .ring-1, .ring-4 {

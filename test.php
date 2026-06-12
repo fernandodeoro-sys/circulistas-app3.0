@@ -2,12 +2,19 @@
 
 try {
     $pdo = new PDO(
-        "pgsql:host=192.168.30.254;port=5432;dbname=Padron_MCJ_BD",
+        "pgsql:host=localhost;port=5432;dbname=Padron_MCJ_BD",
         "postgres",
-        "otIlE4NK93e6Mm2UzL20GX5V6cp6lvCSROYoNYa0LJYnmwkKmpMQ1ORd72xwnv0x"
+        "pelado86"
     );
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    echo "Conexión OK";
+    $tables = ['circulistas', 'eventos', 'participaciones', 'roles', 'tipos_evento', 'users'];
+    foreach ($tables as $table) {
+        $stmt = $pdo->prepare("SELECT setval(pg_get_serial_sequence(:table, 'id'), COALESCE(MAX(id), 1)) FROM " . $table);
+        $stmt->execute(['table' => $table]);
+        echo "Reset sequence for $table successfully.\n";
+    }
+
 } catch (Exception $e) {
-    echo $e->getMessage();
+    echo "ERROR: " . $e->getMessage() . "\n";
 }
