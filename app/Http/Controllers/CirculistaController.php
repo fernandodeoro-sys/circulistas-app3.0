@@ -251,4 +251,48 @@ class CirculistaController extends Controller
         return redirect()->route('circulistas.index')
             ->with('success', 'Circulista eliminado exitosamente.');
     }
+
+    /**
+     * Verify importable people names against database to check for existing records.
+     */
+    public function verificarImportables(Request $request)
+    {
+        $request->validate([
+            'personas' => 'required|array',
+            'personas.*.nombre' => 'required|string',
+            'personas.*.apellido' => 'required|string',
+        ]);
+
+        $personas = $request->input('personas');
+        $coincidencias = [];
+
+        foreach ($personas as $index => $persona) {
+            $nombre = trim($persona['nombre']);
+            $apellido = trim($persona['apellido']);
+
+            $match = Circulista::where('nombre', 'ilike', $nombre)
+                ->where('apellido', 'ilike', $apellido)
+                ->first();
+
+            if ($match) {
+                $coincidencias[$index] = [
+                    'id' => $match->id,
+                    'nombre' => $match->nombre,
+                    'apellido' => $match->apellido,
+                    'email' => $match->email,
+                    'celular' => $match->celular,
+                    'fecha_nacimiento' => $match->fecha_nacimiento ? $match->fecha_nacimiento->format('Y-m-d') : null,
+                    'sin_anio_nacimiento' => $match->sin_anio_nacimiento,
+                    'domicilio' => $match->domicilio,
+                    'localidad' => $match->localidad,
+                    'provincia' => $match->provincia,
+                ];
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'coincidencias' => $coincidencias
+        ]);
+    }
 }

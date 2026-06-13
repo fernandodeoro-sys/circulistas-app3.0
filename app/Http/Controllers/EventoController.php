@@ -251,4 +251,193 @@ class EventoController extends Controller
 
         return view('eventos.circular_cocina', compact('evento', 'jefesCocina', 'cocineros', 'integrantesCocina'));
     }
+
+    /**
+     * Show the view for mass importing participants from Excel or PDF.
+     */
+    public function showImportForm()
+    {
+        $tiposEvento = \App\Models\TipoEvento::orderBy('nombre')->get();
+        $eventos = \App\Models\Evento::with('tipoEvento')->orderBy('fecha_inicio', 'desc')->get();
+        $roles = \App\Models\Rol::orderBy('nombre')->get();
+
+        return view('eventos.importar', compact('tiposEvento', 'eventos', 'roles'));
+    }
+
+    /**
+     * Handle the mass import of participants.
+     */
+    public function importMasivo(Request $request)
+    {
+        // 1. Validar la estructura básica del payload
+        $rules = [
+            'evento_modo' => 'required|in:existente,nuevo',
+            'participantes' => 'required|array|min:1',
+            'participantes.*.nombre' => 'required|string|max:100',
+            'participantes.*.apellido' => 'required|string|max:100',
+            'participantes.*.rol_id' => 'required|exists:roles,id',
+            'participantes.*.grupo' => 'nullable|string|max:50',
+            'participantes.*.email' => 'nullable|email|max:150',
+            'participantes.*.celular' => 'nullable|string|max:50',
+            'participantes.*.fecha_nacimiento' => 'nullable|date',
+            'participantes.*.sin_anio_nacimiento' => 'nullable|boolean',
+            'participantes.*.domicilio' => 'nullable|string|max:255',
+            'participantes.*.localidad' => 'nullable|string|max:100',
+            'participantes.*.provincia' => 'nullable|string|max:100',
+        ];
+
+        if ($request->input('evento_modo') === 'existente') {
+            $rules['evento_id'] = 'required|exists:eventos,id';
+        } else {
+            $rules['tipo_evento_id'] = 'required|exists:tipos_evento,id';
+            $rules['numero_evento'] = 'required|integer';
+            $rules['lugar'] = 'required|string|max:255';
+            $rules['fecha_inicio'] = 'required|date';
+            $rules['fecha_fin'] = 'required|date|after_or_equal:fecha_inicio';
+            $rules['observaciones'] = 'nullable|string';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Iniciar transacción de base de datos
+        \Illuminate\Support\Facades\DB::beginTransaction();
+
+        try {
+            // 2. Obtener o crear el Evento
+            if ($request->input('evento_modo') === 'existente') {
+                $eventoId = $request->input('evento_id');
+                $evento = \App\Models\Evento::findOrFail($eventoId);
+            } else {
+                // Verificar si ya existe un evento del mismo tipo y número
+                $eventoExistente = \App\Models\Evento::where('tipo_evento_id', $validated['tipo_evento_id'])
+                    ->where('numero_evento', $validated['numero_evento'])
+                    ->first();
+
+                if ($eventoExistente) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Ya existe un evento registrado con ese tipo y número (' . ($eventoExistente->tipoEvento->nombre ?? 'Retiro') . ' Nº ' . $eventoExistente->numero_evento . ').'
+                    ], 422);
+                }
+
+                $evento = \App\Models\Evento::create([
+                    'tipo_evento_id' => $validated['tipo_evento_id'],
+                    'numero_evento' => $validated['numero_evento'],
+                    'lugar' => $validated['lugar'],
+                    'fecha_inicio' => $validated['fecha_inicio'],
+                    'fecha_fin' => $validated['fecha_fin'],
+                    'observaciones' => $validated['observaciones'] ?? null,
+                    'activo' => true
+                ]);
+                $eventoId = $evento->id;
+            }
+
+            // 3. Procesar participantes
+            $personasCreadasCount = 0;
+            $personasAsociadasCount = 0;
+            $participacionesCreadasCount = 0;
+
+            $participantes = $request->input('participantes');
+
+            foreach ($participantes as $p) {
+                $nombre = trim($p['nombre']);
+                $apellido = trim($p['apellido']);
+
+                // Buscar por coincidencia exacta de nombre y apellido
+                $circulista = \App\Models\Circulista::where('nombre', 'ilike', $nombre)
+                    ->where('apellido', 'ilike', $apellido)
+                    ->first();
+
+                if ($circulista) {
+                    $personasAsociadasCount++;
+                    
+                    // Opcional: Actualizar datos de contacto si vienen en el Excel y son diferentes/nuevos
+                    $updatedData = [];
+                    if (!empty($p['email']) && $circulista->email !== trim($p['email'])) {
+                        $updatedData['email'] = trim($p['email']);
+                    }
+                    if (!empty($p['celular']) && $circulista->celular !== trim($p['celular'])) {
+                        $updatedData['celular'] = trim($p['celular']);
+                    }
+                    
+                    $dbFechaStr = $circulista->fecha_nacimiento ? $circulista->fecha_nacimiento->format('Y-m-d') : null;
+                    if (!empty($p['fecha_nacimiento']) && $dbFechaStr !== $p['fecha_nacimiento']) {
+                        $updatedData['fecha_nacimiento'] = $p['fecha_nacimiento'];
+                        $updatedData['sin_anio_nacimiento'] = isset($p['sin_anio_nacimiento']) ? (bool)$p['sin_anio_nacimiento'] : false;
+                    }
+                    if (!empty($p['domicilio']) && $circulista->domicilio !== trim($p['domicilio'])) {
+                        $updatedData['domicilio'] = trim($p['domicilio']);
+                    }
+                    if (!empty($p['localidad']) && $circulista->localidad !== trim($p['localidad'])) {
+                        $updatedData['localidad'] = trim($p['localidad']);
+                    }
+                    if (!empty($p['provincia']) && $circulista->provincia !== trim($p['provincia'])) {
+                        $updatedData['provincia'] = trim($p['provincia']);
+                    }
+                    
+                    if (!empty($updatedData)) {
+                        $circulista->update($updatedData);
+                    }
+                } else {
+                    // Crear circulista nuevo
+                    $circulista = \App\Models\Circulista::create([
+                        'nombre' => $nombre,
+                        'apellido' => $apellido,
+                        'email' => !empty($p['email']) ? trim($p['email']) : null,
+                        'celular' => !empty($p['celular']) ? trim($p['celular']) : null,
+                        'fecha_nacimiento' => !empty($p['fecha_nacimiento']) ? $p['fecha_nacimiento'] : null,
+                        'sin_anio_nacimiento' => isset($p['sin_anio_nacimiento']) ? (bool)$p['sin_anio_nacimiento'] : false,
+                        'domicilio' => !empty($p['domicilio']) ? trim($p['domicilio']) : null,
+                        'localidad' => !empty($p['localidad']) ? trim($p['localidad']) : null,
+                        'provincia' => !empty($p['provincia']) ? trim($p['provincia']) : null,
+                        'activo' => true
+                    ]);
+                    $personasCreadasCount++;
+                }
+
+                // Registrar la Participación
+                // Evitamos duplicar si la persona ya está vinculada a ese mismo evento
+                $participacionExistente = \App\Models\Participacion::where('circulista_id', $circulista->id)
+                    ->where('evento_id', $eventoId)
+                    ->first();
+
+                if ($participacionExistente) {
+                    // Si ya existe, actualizamos su rol y grupo
+                    $participacionExistente->update([
+                        'rol_id' => $p['rol_id'],
+                        'grupo' => !empty($p['grupo']) ? trim($p['grupo']) : null
+                    ]);
+                } else {
+                    \App\Models\Participacion::create([
+                        'circulista_id' => $circulista->id,
+                        'evento_id' => $eventoId,
+                        'rol_id' => $p['rol_id'],
+                        'grupo' => !empty($p['grupo']) ? trim($p['grupo']) : null
+                    ]);
+                    $participacionesCreadasCount++;
+                }
+            }
+
+            \Illuminate\Support\Facades\DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Proceso finalizado correctamente.',
+                'summary' => [
+                    'evento' => ($request->input('evento_modo') === 'nuevo' ? 'Creado: ' : 'Asociado a: ') . ($evento->tipoEvento->nombre ?? 'Retiro') . ' Nº ' . $evento->numero_evento,
+                    'evento_id' => $eventoId,
+                    'circulistas_nuevos' => $personasCreadasCount,
+                    'circulistas_existentes' => $personasAsociadasCount,
+                    'participaciones' => $participacionesCreadasCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Ocurrió un error al procesar la importación: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }
