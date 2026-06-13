@@ -132,15 +132,15 @@
         }
 
         @page {
-            size: auto;
-            margin: 0mm;
+            size: portrait;
+            margin: 20mm 15mm 20mm 15mm;
         }
 
         /* Estilos de Impresión */
         @media print {
             body {
                 margin: 0;
-                padding: 15mm 15mm;
+                padding: 0;
                 font-size: 10px;
             }
             .no-print {
@@ -152,6 +152,18 @@
             .circular-container {
                 max-width: 100%;
             }
+        }
+
+        /* Pie de página de tabla para impresión */
+        .no-border-print-footer {
+            border: none !important;
+            border-top: 1.5px solid #000 !important;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+            letter-spacing: 1.5px;
+            padding-top: 12px !important;
+            padding-bottom: 5px !important;
         }
 
         /* Botón de impresión */
@@ -367,6 +379,13 @@
                     </tr>
                 @endif
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="no-border-print-footer">
+                        MOVIMIENTO CÍRCULOS DE JUVENTUD
+                    </td>
+                </tr>
+            </tfoot>
         </table>
 
         <!-- Recuadro al pie de la tabla -->
