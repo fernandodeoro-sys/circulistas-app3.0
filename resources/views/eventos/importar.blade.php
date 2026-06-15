@@ -144,16 +144,16 @@
                 <table class="min-w-full divide-y divide-slate-200" id="previewTable">
                     <thead class="bg-slate-50/70">
                         <tr>
-                            <th scope="col" class="py-3 pl-4 pr-2 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Estado</th>
+                            <th scope="col" class="py-3 pl-4 pr-2 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Acciones</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Estado</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Apellido</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Nombre</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Fecha Nac.</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Celular</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Email</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Domicilio</th>
-                            <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500 w-44">Rol</th>
+                            <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500" style="width: 176px; min-width: 176px;">Rol</th>
                             <th scope="col" class="px-2 py-3 text-left text-xs font-bold uppercase tracking-wider text-slate-500">Grupo/Patrulla</th>
-                            <th scope="col" class="py-3 pl-2 pr-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">Acciones</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-100 bg-white" id="previewTableBody">
@@ -433,7 +433,14 @@
             let sin_anio_nacimiento = false;
             if (indices.fecha_nacimiento !== -1 && row[indices.fecha_nacimiento]) {
                 const rawDate = row[indices.fecha_nacimiento];
-                if (typeof rawDate === 'number') {
+                if (rawDate instanceof Date || (rawDate && typeof rawDate.getMonth === 'function')) {
+                    // Si ya es un objeto Date de JS (evitamos desfases de zona horaria usando UTC)
+                    let yyyy = rawDate.getUTCFullYear();
+                    let mm = String(rawDate.getUTCMonth() + 1).padStart(2, '0');
+                    let dd = String(rawDate.getUTCDate()).padStart(2, '0');
+                    fecha_nacimiento = `${yyyy}-${mm}-${dd}`;
+                    sin_anio_nacimiento = false;
+                } else if (typeof rawDate === 'number') {
                     const res = formatExcelDate(rawDate);
                     fecha_nacimiento = res.date;
                     sin_anio_nacimiento = res.sinAnio;
@@ -472,37 +479,24 @@
 
     // Convierte número serial de Excel a formato YYYY-MM-DD
     function formatExcelDate(serial) {
-        const utc_days  = Math.floor(serial - 25569);
-        const utc_value = utc_days * 86400;
-        const date_info = new Date(utc_value * 1000);
-        
-        const timezoneOffset = date_info.getTimezoneOffset() * 60 * 1000;
-        const localDate = new Date(date_info.getTime() + timezoneOffset);
-        
-        let yyyy = localDate.getFullYear();
-        let sinAnio = false;
-        
-        const currentYear = new Date().getFullYear();
-        if (yyyy === currentYear) {
-            yyyy = 1904;
-            sinAnio = true;
-        }
-        
-        let mm = localDate.getMonth() + 1;
-        let dd = localDate.getDate();
-        
-        if (dd < 10) dd = '0' + dd;
-        if (mm < 10) mm = '0' + mm;
+        // Redondeamos al entero más cercano para evitar problemas de precisión decimal (ej: 46322.9994 -> 46323)
+        const dateInfo = XLSX.SSF.parse_date_code(Math.round(serial));
+        let yyyy = dateInfo.y;
+        let mm = String(dateInfo.m).padStart(2, '0');
+        let dd = String(dateInfo.d).padStart(2, '0');
         
         return {
             date: `${yyyy}-${mm}-${dd}`,
-            sinAnio: sinAnio
+            sinAnio: false
         };
     }
 
     // Normaliza strings de fechas a YYYY-MM-DD
     function parseDateString(str) {
         if (!str) return { date: '', sinAnio: false };
+        
+        // Limpiar hora si existe (ej. "28/10/2026 00:00:00" -> "28/10/2026")
+        str = str.split(/\s+/)[0];
         
         str = str.replace(/[.\/-]/g, '-').trim();
         
@@ -567,20 +561,25 @@
                 if (p2.length === 2) {
                     year = year < 50 ? 2000 + year : 1900 + year;
                 }
-                month = p1;
-                day = parseInt(p0, 10);
+                
+                const p0_num = parseInt(p0, 10);
+                const p1_num = parseInt(p1, 10);
+                
+                // Si el segundo término (p1) es mayor a 12, es el día (formato MM-DD-YYYY o MM/DD/YYYY)
+                if (p1_num > 12 && p0_num <= 12) {
+                    month = p0_num;
+                    day = p1_num;
+                } else {
+                    // Formato por defecto: DD-MM-YYYY
+                    month = p1_num;
+                    day = p0_num;
+                }
             }
             
             if (day && month && year && !isNaN(day) && !isNaN(year)) {
-                const currentYear = new Date().getFullYear();
-                let sinAnio = false;
-                if (year === currentYear) {
-                    year = 1904;
-                    sinAnio = true;
-                }
                 return {
                     date: `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`,
-                    sinAnio: sinAnio
+                    sinAnio: false
                 };
             }
         }
@@ -588,18 +587,22 @@
         const parsed = Date.parse(str);
         if (!isNaN(parsed)) {
             const d = new Date(parsed);
-            const currentYear = new Date().getFullYear();
             let y = d.getFullYear();
-            let sinAnio = false;
-            if (y === currentYear) {
-                y = 1904;
-                sinAnio = true;
+            let mm = d.getMonth() + 1;
+            let dd = d.getDate();
+            
+            // Si la cadena parece UTC/ISO, usamos métodos UTC para evitar desfase de zona horaria
+            if (str.includes('T') || str.includes('Z')) {
+                y = d.getUTCFullYear();
+                mm = d.getUTCMonth() + 1;
+                dd = d.getUTCDate();
             }
-            const mm = String(d.getMonth() + 1).padStart(2, '0');
-            const dd = String(d.getDate()).padStart(2, '0');
+            
+            const mmStr = String(mm).padStart(2, '0');
+            const ddStr = String(dd).padStart(2, '0');
             return {
-                date: `${y}-${mm}-${dd}`,
-                sinAnio: sinAnio
+                date: `${y}-${mmStr}-${ddStr}`,
+                sinAnio: false
             };
         }
         
@@ -772,7 +775,11 @@
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    personas: IMPORT_DATA.map(r => ({ nombre: r.nombre, apellido: r.apellido }))
+                    personas: IMPORT_DATA.map(r => ({ 
+                        nombre: r.nombre, 
+                        apellido: r.apellido,
+                        celular: r.celular
+                    }))
                 })
             });
 
@@ -853,8 +860,18 @@
             });
 
             tr.innerHTML = `
+                <!-- Acciones -->
+                <td class="whitespace-nowrap py-3 pl-4 pr-2 text-center">
+                    <button type="button" onclick="eliminarFila(${index})" 
+                            class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition">
+                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </td>
+
                 <!-- Estado -->
-                <td class="whitespace-nowrap py-3 pl-4 pr-2">
+                <td class="whitespace-nowrap px-2 py-3">
                     <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${badgeClass}" title="${row.db_id ? 'ID #' + row.db_id : 'Se creará en base de datos'}">
                         ${badgeText}
                     </span>
@@ -905,7 +922,8 @@
                 <!-- Rol -->
                 <td class="px-2 py-2">
                     <select onchange="updateRowField(${index}, 'rol_id', parseInt(this.value))" 
-                            class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none shadow-sm">
+                            class="w-full rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs text-slate-800 focus:border-indigo-500 focus:outline-none shadow-sm"
+                            style="min-width: 140px;">
                         ${roleSelectOptions}
                     </select>
                 </td>
@@ -915,16 +933,6 @@
                     <input type="text" value="${escapeHtml(row.grupo)}" 
                            onchange="updateRowField(${index}, 'grupo', this.value)" 
                            class="w-full text-slate-800 bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none py-0.5">
-                </td>
-                
-                <!-- Acciones -->
-                <td class="whitespace-nowrap py-3 pl-2 pr-4 text-center">
-                    <button type="button" onclick="eliminarFila(${index})" 
-                            class="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition">
-                        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
                 </td>
             `;
             

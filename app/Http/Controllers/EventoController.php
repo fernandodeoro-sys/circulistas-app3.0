@@ -343,10 +343,23 @@ class EventoController extends Controller
                 $nombre = trim($p['nombre']);
                 $apellido = trim($p['apellido']);
 
-                // Buscar por coincidencia exacta de nombre y apellido
-                $circulista = \App\Models\Circulista::where('nombre', 'ilike', $nombre)
-                    ->where('apellido', 'ilike', $apellido)
+                // Buscar por coincidencia exacta de nombre y apellido (insensible a acentos)
+                $circulista = \App\Models\Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
+                    ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido])
                     ->first();
+
+                // Si no coincide, intentar buscar por celular (últimos 7 dígitos)
+                $celular = !empty($p['celular']) ? trim($p['celular']) : '';
+                if (!$circulista && !empty($celular)) {
+                    $cleanCel = preg_replace('/[^\d]/', '', $celular);
+                    if (strlen($cleanCel) >= 7) {
+                        $last7 = substr($cleanCel, -7);
+                        $circulista = \App\Models\Circulista::where(function($q) use ($last7) {
+                            $q->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
+                              ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
+                        })->first();
+                    }
+                }
 
                 if ($circulista) {
                     $personasAsociadasCount++;

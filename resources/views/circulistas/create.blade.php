@@ -266,6 +266,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const nombreInput = document.getElementById('nombre');
         const apellidoInput = document.getElementById('apellido');
+        const celularInput = document.getElementById('celular');
         const alertaDuplicado = document.getElementById('alerta-duplicado');
         const duplicadoNombre = document.getElementById('duplicado-nombre');
         const duplicadoLink = document.getElementById('duplicado-link');
@@ -275,8 +276,10 @@
         function buscarDuplicado() {
             const nombre = nombreInput.value.trim();
             const apellido = apellidoInput.value.trim();
+            const celular = celularInput ? celularInput.value.trim() : '';
 
-            if (nombre.length < 2 || apellido.length < 2) {
+            const cleanCel = celular.replace(/[^\d]/g, '');
+            if ((nombre.length < 2 || apellido.length < 2) && cleanCel.length < 7) {
                 alertaDuplicado.classList.add('hidden');
                 return;
             }
@@ -289,7 +292,8 @@
                 },
                 body: JSON.stringify({
                     nombre: nombre,
-                    apellido: apellido
+                    apellido: apellido,
+                    celular: celular
                 })
             })
             .then(response => response.json())
@@ -312,6 +316,9 @@
 
         nombreInput.addEventListener('input', debouncedBuscar);
         apellidoInput.addEventListener('input', debouncedBuscar);
+        if (celularInput) {
+            celularInput.addEventListener('input', debouncedBuscar);
+        }
     });
 </script>
 

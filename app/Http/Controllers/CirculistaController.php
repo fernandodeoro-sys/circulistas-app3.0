@@ -26,11 +26,11 @@ class CirculistaController extends Controller
                 $query->where(function ($q) use ($words) {
                     foreach ($words as $word) {
                         $q->where(function ($subQ) use ($word) {
-                            $subQ->where('nombre', 'ilike', "%{$word}%")
-                                 ->orWhere('apellido', 'ilike', "%{$word}%")
+                            $subQ->whereRaw('unaccent(nombre) ilike unaccent(?)', ["%{$word}%"])
+                                 ->orWhereRaw('unaccent(apellido) ilike unaccent(?)', ["%{$word}%"])
                                  ->orWhere('email', 'ilike', "%{$word}%")
-                                 ->orWhere('localidad', 'ilike', "%{$word}%")
-                                 ->orWhere('provincia', 'ilike', "%{$word}%");
+                                 ->orWhereRaw('unaccent(localidad) ilike unaccent(?)', ["%{$word}%"])
+                                 ->orWhereRaw('unaccent(provincia) ilike unaccent(?)', ["%{$word}%"]);
                         });
                     }
                 });
@@ -71,9 +71,9 @@ class CirculistaController extends Controller
             'nacimiento_mes' => 'nullable|integer|between:1,12',
         ]);
 
-        // Evitar duplicados por nombre y apellido
-        $existeDuplicado = Circulista::where('nombre', 'ilike', trim($validated['nombre']))
-            ->where('apellido', 'ilike', trim($validated['apellido']))
+        // Evitar duplicados por nombre y apellido (insensible a acentos)
+        $existeDuplicado = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [trim($validated['nombre'])])
+            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [trim($validated['apellido'])])
             ->exists();
 
         if ($existeDuplicado) {
@@ -122,18 +122,47 @@ class CirculistaController extends Controller
     {
         $nombre = trim($request->input('nombre'));
         $apellido = trim($request->input('apellido'));
+        $celular = trim($request->input('celular'));
         $ignoreId = $request->input('ignore_id');
 
-        if (empty($nombre) || empty($apellido)) {
+        if (empty($nombre) && empty($apellido) && empty($celular)) {
             return response()->json(['existe' => false]);
         }
 
-        $query = Circulista::where('nombre', 'ilike', $nombre)
-            ->where('apellido', 'ilike', $apellido);
+        $query = Circulista::query();
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
+
+        // Buscar coincidencia por nombre y apellido o por celular
+        $query->where(function($q) use ($nombre, $apellido, $celular) {
+            $hasName = (!empty($nombre) && !empty($apellido));
+            $hasPhone = !empty($celular);
+
+            if ($hasName) {
+                $q->where(function($subQ) use ($nombre, $apellido) {
+                    $subQ->whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
+                         ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido]);
+                });
+            }
+
+            if ($hasPhone) {
+                $cleanCel = preg_replace('/[^\d]/', '', $celular);
+                if (strlen($cleanCel) >= 7) {
+                    $last7 = substr($cleanCel, -7);
+                    if ($hasName) {
+                        $q->orWhere(function($subQ) use ($last7) {
+                            $subQ->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
+                                 ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
+                        });
+                    } else {
+                        $q->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
+                          ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
+                    }
+                }
+            }
+        });
 
         $duplicado = $query->first();
 
@@ -195,9 +224,9 @@ class CirculistaController extends Controller
             'nacimiento_mes' => 'nullable|integer|between:1,12',
         ]);
 
-        // Evitar duplicados por nombre y apellido (excluyendo el actual)
-        $existeDuplicado = Circulista::where('nombre', 'ilike', trim($validated['nombre']))
-            ->where('apellido', 'ilike', trim($validated['apellido']))
+        // Evitar duplicados por nombre y apellido (excluyendo el actual - insensible a acentos)
+        $existeDuplicado = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [trim($validated['nombre'])])
+            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [trim($validated['apellido'])])
             ->where('id', '!=', $id)
             ->exists();
 
@@ -261,6 +290,7 @@ class CirculistaController extends Controller
             'personas' => 'required|array',
             'personas.*.nombre' => 'required|string',
             'personas.*.apellido' => 'required|string',
+            'personas.*.celular' => 'nullable|string',
         ]);
 
         $personas = $request->input('personas');
@@ -269,10 +299,24 @@ class CirculistaController extends Controller
         foreach ($personas as $index => $persona) {
             $nombre = trim($persona['nombre']);
             $apellido = trim($persona['apellido']);
+            $celular = isset($persona['celular']) ? trim($persona['celular']) : '';
 
-            $match = Circulista::where('nombre', 'ilike', $nombre)
-                ->where('apellido', 'ilike', $apellido)
+            // 1. Intentar por nombre y apellido
+            $match = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
+                ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido])
                 ->first();
+
+            // 2. Si no coincide, intentar por celular (últimos 7 dígitos)
+            if (!$match && !empty($celular)) {
+                $cleanCel = preg_replace('/[^\d]/', '', $celular);
+                if (strlen($cleanCel) >= 7) {
+                    $last7 = substr($cleanCel, -7);
+                    $match = Circulista::where(function($q) use ($last7) {
+                        $q->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
+                          ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
+                    })->first();
+                }
+            }
 
             if ($match) {
                 $coincidencias[$index] = [
