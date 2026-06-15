@@ -73,19 +73,6 @@ class CirculistaController extends Controller
             'nacimiento_mes' => 'nullable|integer|between:1,12',
         ]);
 
-        // Evitar duplicados por nombre y apellido (insensible a acentos)
-        $existeDuplicado = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [trim($validated['nombre'])])
-            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [trim($validated['apellido'])])
-            ->exists();
-
-        if ($existeDuplicado) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'nombre' => 'Ya existe un circulista registrado con ese nombre y apellido.'
-                ]);
-        }
-
         // Lógica de fecha de nacimiento
         $tipoFecha = $request->input('fecha_nacimiento_tipo', 'completa');
         $sinAnio = false;
@@ -107,6 +94,43 @@ class CirculistaController extends Controller
             $sinAnio = true;
         }
 
+        $nombre = trim($validated['nombre']);
+        $apellido = trim($validated['apellido']);
+
+        // Evitar duplicados por nombre y apellido AND (celular OR fecha_nacimiento)
+        $existeDuplicado = false;
+        $candidatos = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
+            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido])
+            ->get();
+
+        foreach ($candidatos as $candidato) {
+            // Caso 1: Coincide el celular (si ambos lo tienen registrado)
+            $celularNuevo = !empty($validated['celular']) ? preg_replace('/[^\d]/', '', $validated['celular']) : null;
+            $celularExistente = !empty($candidato->celular) ? preg_replace('/[^\d]/', '', $candidato->celular) : null;
+            
+            if ($celularNuevo && $celularExistente && $celularNuevo === $celularExistente) {
+                $existeDuplicado = true;
+                break;
+            }
+
+            // Caso 2: Coincide la fecha de nacimiento (si ambos la tienen registrada)
+            $fechaNacNuevo = !empty($fechaNacimiento) ? date('Y-m-d', strtotime($fechaNacimiento)) : null;
+            $fechaNacExistente = $candidato->fecha_nacimiento ? $candidato->fecha_nacimiento->format('Y-m-d') : null;
+            
+            if ($fechaNacNuevo && $fechaNacExistente && $fechaNacNuevo === $fechaNacExistente) {
+                $existeDuplicado = true;
+                break;
+            }
+        }
+
+        if ($existeDuplicado) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'nombre' => 'Ya existe un circulista registrado con ese nombre y apellido con el mismo celular o fecha de nacimiento.'
+                ]);
+        }
+
         $validated['fecha_nacimiento'] = $fechaNacimiento;
         $validated['sin_anio_nacimiento'] = $sinAnio;
         $validated['activo'] = $request->has('activo');
@@ -122,53 +146,68 @@ class CirculistaController extends Controller
      */
     public function verificarDuplicado(Request $request)
     {
-        $nombre = trim($request->input('nombre'));
-        $apellido = trim($request->input('apellido'));
-        $celular = trim($request->input('celular'));
+        $nombre = trim($request->input('nombre', ''));
+        $apellido = trim($request->input('apellido', ''));
+        $celular = trim($request->input('celular', ''));
         $ignoreId = $request->input('ignore_id');
 
-        if (empty($nombre) && empty($apellido) && empty($celular)) {
+        if (empty($nombre) || empty($apellido)) {
             return response()->json(['existe' => false]);
         }
 
-        $query = Circulista::query();
+        // Determinar fecha de nacimiento ingresada
+        $tipoFecha = $request->input('fecha_nacimiento_tipo', 'completa');
+        $fechaNacimiento = null;
+
+        if ($tipoFecha === 'completa' && $request->filled('fecha_nacimiento')) {
+            $fechaNacimiento = $request->input('fecha_nacimiento');
+        } elseif ($tipoFecha === 'solo_dia_mes' && $request->filled('nacimiento_dia') && $request->filled('nacimiento_mes')) {
+            $dia = (int)$request->input('nacimiento_dia');
+            $mes = (int)$request->input('nacimiento_mes');
+            if (checkdate($mes, $dia, 1904)) {
+                $fechaNacimiento = sprintf('1904-%02d-%02d', $mes, $dia);
+            }
+        }
+
+        // Si no hay celular ni fecha de nacimiento, no se puede verificar duplicado bajo el criterio combinado
+        if (empty($celular) && empty($fechaNacimiento)) {
+            return response()->json(['existe' => false]);
+        }
+
+        $query = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
+            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido]);
 
         if ($ignoreId) {
             $query->where('id', '!=', $ignoreId);
         }
 
-        // Buscar coincidencia por nombre y apellido o por celular
-        $query->where(function($q) use ($nombre, $apellido, $celular) {
-            $hasName = (!empty($nombre) && !empty($apellido));
-            $hasPhone = !empty($celular);
+        $candidatos = $query->get();
+        $existeDuplicado = false;
+        $duplicado = null;
 
-            if ($hasName) {
-                $q->where(function($subQ) use ($nombre, $apellido) {
-                    $subQ->whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
-                         ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido]);
-                });
+        foreach ($candidatos as $candidato) {
+            // Caso 1: Coincide el celular (si ambos lo tienen registrado)
+            $celularNuevo = !empty($celular) ? preg_replace('/[^\d]/', '', $celular) : null;
+            $celularExistente = !empty($candidato->celular) ? preg_replace('/[^\d]/', '', $candidato->celular) : null;
+            
+            if ($celularNuevo && $celularExistente && $celularNuevo === $celularExistente) {
+                $existeDuplicado = true;
+                $duplicado = $candidato;
+                break;
             }
 
-            if ($hasPhone) {
-                $cleanCel = preg_replace('/[^\d]/', '', $celular);
-                if (strlen($cleanCel) >= 7) {
-                    $last7 = substr($cleanCel, -7);
-                    if ($hasName) {
-                        $q->orWhere(function($subQ) use ($last7) {
-                            $subQ->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
-                                 ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
-                        });
-                    } else {
-                        $q->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
-                          ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
-                    }
-                }
+            // Caso 2: Coincide la fecha de nacimiento (si ambos la tienen registrada)
+            $fechaNacNuevo = !empty($fechaNacimiento) ? date('Y-m-d', strtotime($fechaNacimiento)) : null;
+            $fechaNacExistente = $candidato->fecha_nacimiento ? $candidato->fecha_nacimiento->format('Y-m-d') : null;
+            
+            if ($fechaNacNuevo && $fechaNacExistente && $fechaNacNuevo === $fechaNacExistente) {
+                $existeDuplicado = true;
+                $duplicado = $candidato;
+                break;
             }
-        });
+        }
 
-        $duplicado = $query->first();
-
-        if ($duplicado) {
+        if ($existeDuplicado && $duplicado) {
             return response()->json([
                 'existe' => true,
                 'url' => route('circulistas.show', $duplicado->id),
@@ -226,20 +265,6 @@ class CirculistaController extends Controller
             'nacimiento_mes' => 'nullable|integer|between:1,12',
         ]);
 
-        // Evitar duplicados por nombre y apellido (excluyendo el actual - insensible a acentos)
-        $existeDuplicado = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [trim($validated['nombre'])])
-            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [trim($validated['apellido'])])
-            ->where('id', '!=', $id)
-            ->exists();
-
-        if ($existeDuplicado) {
-            return back()
-                ->withInput()
-                ->withErrors([
-                    'nombre' => 'Ya existe otro circulista registrado con ese nombre y apellido.'
-                ]);
-        }
-
         // Lógica de fecha de nacimiento
         $tipoFecha = $request->input('fecha_nacimiento_tipo', 'completa');
         $sinAnio = false;
@@ -259,6 +284,44 @@ class CirculistaController extends Controller
             }
             $fechaNacimiento = sprintf('1904-%02d-%02d', $mes, $dia);
             $sinAnio = true;
+        }
+
+        $nombre = trim($validated['nombre']);
+        $apellido = trim($validated['apellido']);
+
+        // Evitar duplicados por nombre y apellido (excluyendo el actual) AND (celular OR fecha_nacimiento)
+        $existeDuplicado = false;
+        $candidatos = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
+            ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido])
+            ->where('id', '!=', $id)
+            ->get();
+
+        foreach ($candidatos as $candidato) {
+            // Caso 1: Coincide el celular (si ambos lo tienen registrado)
+            $celularNuevo = !empty($validated['celular']) ? preg_replace('/[^\d]/', '', $validated['celular']) : null;
+            $celularExistente = !empty($candidato->celular) ? preg_replace('/[^\d]/', '', $candidato->celular) : null;
+            
+            if ($celularNuevo && $celularExistente && $celularNuevo === $celularExistente) {
+                $existeDuplicado = true;
+                break;
+            }
+
+            // Caso 2: Coincide la fecha de nacimiento (si ambos la tienen registrada)
+            $fechaNacNuevo = !empty($fechaNacimiento) ? date('Y-m-d', strtotime($fechaNacimiento)) : null;
+            $fechaNacExistente = $candidato->fecha_nacimiento ? $candidato->fecha_nacimiento->format('Y-m-d') : null;
+            
+            if ($fechaNacNuevo && $fechaNacExistente && $fechaNacNuevo === $fechaNacExistente) {
+                $existeDuplicado = true;
+                break;
+            }
+        }
+
+        if ($existeDuplicado) {
+            return back()
+                ->withInput()
+                ->withErrors([
+                    'nombre' => 'Ya existe otro circulista registrado con ese nombre y apellido con el mismo celular o fecha de nacimiento.'
+                ]);
         }
 
         $validated['fecha_nacimiento'] = $fechaNacimiento;

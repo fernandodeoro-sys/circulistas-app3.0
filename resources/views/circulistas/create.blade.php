@@ -279,7 +279,29 @@
             const celular = celularInput ? celularInput.value.trim() : '';
 
             const cleanCel = celular.replace(/[^\d]/g, '');
-            if ((nombre.length < 2 || apellido.length < 2) && cleanCel.length < 7) {
+            const selectedType = document.querySelector('input[name="fecha_nacimiento_tipo"]:checked')?.value;
+            let hasBirthdate = false;
+            let fecha_nacimiento = '';
+            let nacimiento_dia = '';
+            let nacimiento_mes = '';
+
+            if (selectedType === 'completa') {
+                const fnInput = document.getElementById('fecha_nacimiento');
+                fecha_nacimiento = fnInput ? fnInput.value : '';
+                if (fecha_nacimiento) {
+                    hasBirthdate = true;
+                }
+            } else if (selectedType === 'solo_dia_mes') {
+                const diaSelect = document.getElementById('nacimiento_dia');
+                const mesSelect = document.getElementById('nacimiento_mes');
+                nacimiento_dia = diaSelect ? diaSelect.value : '';
+                nacimiento_mes = mesSelect ? mesSelect.value : '';
+                if (nacimiento_dia && nacimiento_mes) {
+                    hasBirthdate = true;
+                }
+            }
+
+            if (nombre.length < 2 || apellido.length < 2 || (!cleanCel && !hasBirthdate)) {
                 alertaDuplicado.classList.add('hidden');
                 return;
             }
@@ -293,7 +315,11 @@
                 body: JSON.stringify({
                     nombre: nombre,
                     apellido: apellido,
-                    celular: celular
+                    celular: celular,
+                    fecha_nacimiento_tipo: selectedType,
+                    fecha_nacimiento: fecha_nacimiento,
+                    nacimiento_dia: nacimiento_dia,
+                    nacimiento_mes: nacimiento_mes
                 })
             })
             .then(response => response.json())
@@ -318,6 +344,23 @@
         apellidoInput.addEventListener('input', debouncedBuscar);
         if (celularInput) {
             celularInput.addEventListener('input', debouncedBuscar);
+        }
+
+        document.querySelectorAll('input[name="fecha_nacimiento_tipo"]').forEach(radio => {
+            radio.addEventListener('change', debouncedBuscar);
+        });
+        const fechaNacInput = document.getElementById('fecha_nacimiento');
+        if (fechaNacInput) {
+            fechaNacInput.addEventListener('input', debouncedBuscar);
+            fechaNacInput.addEventListener('change', debouncedBuscar);
+        }
+        const nacimientoDiaSelect = document.getElementById('nacimiento_dia');
+        if (nacimientoDiaSelect) {
+            nacimientoDiaSelect.addEventListener('change', debouncedBuscar);
+        }
+        const nacimientoMesSelect = document.getElementById('nacimiento_mes');
+        if (nacimientoMesSelect) {
+            nacimientoMesSelect.addEventListener('change', debouncedBuscar);
         }
     });
 </script>
