@@ -123,7 +123,7 @@
                        id="live-search-input"
                        value="{{ request('search') }}"
                        oninput="handleLiveSearch()"
-                       placeholder="Buscar circulista por nombre, apellido, correo, localidad..." 
+                       placeholder="Buscar circulista por nombre, apellido, correo, localidad, celular, teléfono..." 
                        class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none shadow-sm">
             </div>
             

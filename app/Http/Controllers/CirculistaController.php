@@ -30,7 +30,9 @@ class CirculistaController extends Controller
                                  ->orWhereRaw('unaccent(apellido) ilike unaccent(?)', ["%{$word}%"])
                                  ->orWhere('email', 'ilike', "%{$word}%")
                                  ->orWhereRaw('unaccent(localidad) ilike unaccent(?)', ["%{$word}%"])
-                                 ->orWhereRaw('unaccent(provincia) ilike unaccent(?)', ["%{$word}%"]);
+                                 ->orWhereRaw('unaccent(provincia) ilike unaccent(?)', ["%{$word}%"])
+                                 ->orWhere('celular', 'ilike', "%{$word}%")
+                                 ->orWhere('telefono', 'ilike', "%{$word}%");
                         });
                     }
                 });

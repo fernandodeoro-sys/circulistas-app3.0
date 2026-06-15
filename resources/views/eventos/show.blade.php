@@ -339,7 +339,7 @@
                         @else
                             <input type="text" 
                                    id="circulista-search" 
-                                   placeholder="🔍 Buscar circulista por nombre..." 
+                                   placeholder="🔍 Buscar circulista por nombre, celular, teléfono, correo, localidad..." 
                                    class="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none mb-2"
                                    onkeyup="filterCirculistas()">
                             
@@ -352,6 +352,13 @@
                                                    value="{{ $circulista->id }}" 
                                                    class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500">
                                             <span class="font-medium text-slate-800">{{ $circulista->apellido }}, {{ $circulista->nombre }}</span>
+                                            <span class="hidden">
+                                                {{ $circulista->email }} 
+                                                {{ $circulista->celular }} 
+                                                {{ $circulista->telefono }} 
+                                                {{ $circulista->localidad }} 
+                                                {{ $circulista->provincia }}
+                                            </span>
                                         </label>
                                     @endforeach
                                 </div>
@@ -478,14 +485,25 @@
 
 <script>
     function filterCirculistas() {
-        const query = document.getElementById('circulista-search').value.toLowerCase();
+        const rawQuery = document.getElementById('circulista-search').value.toLowerCase();
+        const queryWords = rawQuery.normalize("NFD").replace(/[\u0300-\u036f]/g, "").split(/\s+/).filter(w => w.length > 0);
         const container = document.getElementById('circulistas-list-container');
         if (!container) return;
         
         const labels = container.getElementsByTagName('label');
         for (let i = 0; i < labels.length; i++) {
-            const text = labels[i].textContent.toLowerCase();
-            if (text.includes(query)) {
+            const rawText = labels[i].textContent.toLowerCase();
+            const text = rawText.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+            
+            let matchesAll = true;
+            for (let j = 0; j < queryWords.length; j++) {
+                if (!text.includes(queryWords[j])) {
+                    matchesAll = false;
+                    break;
+                }
+            }
+            
+            if (matchesAll) {
                 labels[i].style.setProperty('display', 'flex', 'important');
             } else {
                 labels[i].style.setProperty('display', 'none', 'important');

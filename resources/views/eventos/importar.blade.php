@@ -15,7 +15,7 @@
     </div>
     
     <div>
-        <button onclick="descargarPlantilla()" 
+        <button onclick="descargarPlantilla()" id="btnDescargarExcel"
                 class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none cursor-pointer">
             <svg class="h-4.5 w-4.5 mr-1.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" />
@@ -824,7 +824,16 @@
         document.getElementById('rowCountDisplay').innerText = `${IMPORT_DATA.length} registros a procesar`;
         document.getElementById('btnSubmitImport').disabled = IMPORT_DATA.length === 0;
 
+        const btnDescargar = document.getElementById('btnDescargarExcel');
         if (IMPORT_DATA.length === 0) {
+            if (btnDescargar) {
+                btnDescargar.innerHTML = `
+                    <svg class="h-4.5 w-4.5 mr-1.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" />
+                    </svg>
+                    Descargar Plantilla Excel
+                `;
+            }
             body.innerHTML = `
                 <tr>
                     <td colspan="10" class="py-16 text-center text-slate-400 italic text-sm">
@@ -838,6 +847,15 @@
                 </tr>
             `;
             return;
+        }
+
+        if (btnDescargar) {
+            btnDescargar.innerHTML = `
+                <svg class="h-4.5 w-4.5 mr-1.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Exportar Grilla a Excel
+            `;
         }
 
         IMPORT_DATA.forEach((row, index) => {
@@ -1031,11 +1049,40 @@
     // Descargar plantilla Excel modelo
     function descargarPlantilla() {
         const headers = [['Apellido', 'Nombre', 'Fecha Nacimiento', 'Celular', 'Email', 'Domicilio', 'Localidad', 'Provincia', 'Rol', 'Grupo']];
-        const data = [
-            ['Pérez', 'Juan Carlos', '1995-05-15', '2641234567', 'juanperez@example.com', 'Av. Libertador 1234', 'Capital', 'San Juan', 'Circulista', 'San Pedro'],
-            ['Gómez', 'María Alejandra', '1988-12-08', '2647654321', 'mariagomez@example.com', 'Calle Mitre 456', 'Rivadavia', 'San Juan', 'Rector', 'Cocinera'],
-            ['Sánchez', 'Carlos Raúl', '1990-07-22', '', '', '', '', '', 'Asesor', '']
-        ];
+        let data = [];
+        let filename = 'plantilla_importacion_mcj.xlsx';
+        let sheetName = 'Plantilla Importación';
+
+        if (IMPORT_DATA && IMPORT_DATA.length > 0) {
+            filename = 'previsualizacion_importacion.xlsx';
+            sheetName = 'Vista Previa';
+            data = IMPORT_DATA.map(r => {
+                // Encontrar el nombre del Rol basado en el rol_id
+                let rolNombre = 'Circulista';
+                if (ROLES) {
+                    const matchedRol = ROLES.find(rol => rol.id === r.rol_id);
+                    if (matchedRol) rolNombre = matchedRol.nombre;
+                }
+                return [
+                    r.apellido || '',
+                    r.nombre || '',
+                    r.fecha_nacimiento || '',
+                    r.celular || '',
+                    r.email || '',
+                    r.domicilio || '',
+                    r.localidad || '',
+                    r.provincia || '',
+                    rolNombre,
+                    r.grupo || ''
+                ];
+            });
+        } else {
+            data = [
+                ['Pérez', 'Juan Carlos', '1995-05-15', '2641234567', 'juanperez@example.com', 'Av. Libertador 1234', 'Capital', 'San Juan', 'Circulista', 'San Pedro'],
+                ['Gómez', 'María Alejandra', '1988-12-08', '2647654321', 'mariagomez@example.com', 'Calle Mitre 456', 'Rivadavia', 'San Juan', 'Rector', 'Cocinera'],
+                ['Sánchez', 'Carlos Raúl', '1990-07-22', '', '', '', '', '', 'Asesor', '']
+            ];
+        }
         
         const wb = XLSX.utils.book_new();
         const ws = XLSX.utils.aoa_to_sheet(headers.concat(data));
@@ -1054,8 +1101,8 @@
             { wch: 15 }  // Grupo
         ];
         
-        XLSX.utils.book_append_sheet(wb, ws, 'Plantilla Importación');
-        XLSX.writeFile(wb, 'plantilla_importacion_mcj.xlsx');
+        XLSX.utils.book_append_sheet(wb, ws, sheetName);
+        XLSX.writeFile(wb, filename);
     }
 
     function limpiarImportador() {
