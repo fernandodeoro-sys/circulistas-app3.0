@@ -53,15 +53,47 @@
                         <a href="{{ route('busqueda.avanzada') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('busqueda-avanzada*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             Búsqueda Avanzada
                         </a>
+                        @if(Auth::check() && Auth::user()->role === 'administrador')
+                        <a href="{{ route('usuarios.index') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('usuarios*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            Usuarios
+                        </a>
+                        @endif
                     </nav>
                 </div>
                 
                 <!-- Perfil / Acceso Rápido -->
                 <div class="flex items-center gap-4">
-                    <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-600/10">
-                        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Postgres Conectado
-                    </span>
+                    @auth
+                        <div class="flex items-center gap-3">
+                            <div class="text-right">
+                                <div class="text-sm font-bold text-slate-900">{{ Auth::user()->name }}</div>
+                                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                                    {{ Auth::user()->role === 'administrador' ? 'Administrador' : 'Invitado' }}
+                                </div>
+                            </div>
+                            
+                            <!-- Role Badge -->
+                            <span class="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50 text-xs font-bold text-indigo-600 border border-indigo-100" title="{{ Auth::user()->email }}">
+                                {{ strtoupper(substr(Auth::user()->name, 0, 2)) }}
+                            </span>
+                            
+                            <form action="{{ route('logout') }}" method="POST" class="inline">
+                                @csrf
+                                <button type="submit" 
+                                        class="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                        title="Cerrar Sesión">
+                                    <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    @else
+                        <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 ring-1 ring-inset ring-emerald-600/10">
+                            <span class="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                            Postgres Conectado
+                        </span>
+                    @endauth
                 </div>
             </div>
         </div>

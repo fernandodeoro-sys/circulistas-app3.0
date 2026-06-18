@@ -15,6 +15,7 @@
             Total: {{ $eventos->total() }} eventos
         </span>
         
+        @if(Auth::user()->role === 'administrador')
         <!-- Botón Importar Masivo -->
         <a href="{{ route('eventos.import.form') }}"
            class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none">
@@ -32,6 +33,7 @@
             </svg>
             Nuevo Evento
         </a>
+        @endif
     </div>
 </div>
 
@@ -176,6 +178,7 @@
                                 </svg>
                             </a>
                             
+                            @if(Auth::user()->role === 'administrador')
                             <!-- Botón Editar -->
                             <a href="{{ route('eventos.edit', $evento->id) }}"
                                title="Editar Evento"
@@ -200,6 +203,7 @@
                                     </svg>
                                 </button>
                             </form>
+                            @endif
                         </div>
                     </td>
                 </tr>
