@@ -94,6 +94,10 @@
                                 <span class="inline-flex items-center rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-800 ring-1 ring-inset ring-purple-700/10">
                                     Administrador
                                 </span>
+                            @elseif($user->role === 'supervisor')
+                                <span class="inline-flex items-center rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-800 ring-1 ring-inset ring-indigo-700/10">
+                                    Supervisor
+                                </span>
                             @else
                                 <span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600 ring-1 ring-inset ring-slate-500/10">
                                     Invitado

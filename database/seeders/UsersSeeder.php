@@ -32,5 +32,15 @@ class UsersSeeder extends Seeder
                 'role' => 'invitado',
             ]
         );
+
+        // Supervisor
+        User::updateOrCreate(
+            ['email' => 'supervisor@mcj.org'],
+            [
+                'name' => 'Supervisor',
+                'password' => Hash::make('supervisor123'),
+                'role' => 'supervisor',
+            ]
+        );
     }
 }

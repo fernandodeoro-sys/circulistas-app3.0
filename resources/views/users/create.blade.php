@@ -41,7 +41,8 @@
                 <label for="role" class="block text-sm font-semibold text-slate-700 mb-1">Rol / Permisos de Acceso</label>
                 <select name="role" id="role" required
                         class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none shadow-sm">
-                    <option value="invitado" {{ old('role') === 'invitado' ? 'selected' : '' }}>Invitado (Solo Búsqueda y Visualización)</option>
+                    <option value="invitado" {{ old('role') === 'invitado' ? 'selected' : '' }}>Invitado (Solo Búsqueda y Visualización Básica)</option>
+                    <option value="supervisor" {{ old('role') === 'supervisor' ? 'selected' : '' }}>Supervisor (Gestión de Datos sin Usuarios)</option>
                     <option value="administrador" {{ old('role') === 'administrador' ? 'selected' : '' }}>Administrador (Control Total del Sistema)</option>
                 </select>
             </div>

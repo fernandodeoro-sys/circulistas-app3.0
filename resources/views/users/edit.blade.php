@@ -44,13 +44,22 @@
                     <input type="hidden" name="role" value="{{ $user->role }}">
                     <select disabled
                             class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-500 focus:outline-none shadow-sm cursor-not-allowed">
-                        <option value="administrador" selected>Administrador (Control Total del Sistema - Tu usuario)</option>
+                        <option value="{{ $user->role }}" selected>
+                            @if($user->role === 'administrador')
+                                Administrador (Control Total del Sistema - Tu usuario)
+                            @elseif($user->role === 'supervisor')
+                                Supervisor (Gestión de Datos sin Usuarios - Tu usuario)
+                            @else
+                                Invitado (Solo Búsqueda - Tu usuario)
+                            @endif
+                        </option>
                     </select>
                     <p class="mt-1.5 text-xs text-slate-400">Por seguridad, no puedes cambiar tu propio rol desde aquí.</p>
                 @else
                     <select name="role" id="role" required
                             class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 focus:border-indigo-500 focus:outline-none shadow-sm">
-                        <option value="invitado" {{ old('role', $user->role) === 'invitado' ? 'selected' : '' }}>Invitado (Solo Búsqueda y Visualización)</option>
+                        <option value="invitado" {{ old('role', $user->role) === 'invitado' ? 'selected' : '' }}>Invitado (Solo Búsqueda y Visualización Básica)</option>
+                        <option value="supervisor" {{ old('role', $user->role) === 'supervisor' ? 'selected' : '' }}>Supervisor (Gestión de Datos sin Usuarios)</option>
                         <option value="administrador" {{ old('role', $user->role) === 'administrador' ? 'selected' : '' }}>Administrador (Control Total del Sistema)</option>
                     </select>
                 @endif

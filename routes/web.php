@@ -27,15 +27,15 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------
     Route::get('circulistas', [CirculistaController::class, 'index'])->name('circulistas.index');
     
-    // Rutas específicas del Administrador (registradas antes del comodín {circulista})
-    Route::middleware('role:administrador')->group(function () {
+    // Rutas específicas del Administrador/Supervisor (registradas antes del comodín {circulista})
+    Route::middleware('role:administrador,supervisor')->group(function () {
         Route::get('circulistas/create', [CirculistaController::class, 'create'])->name('circulistas.create');
         Route::get('circulistas/{circulista}/edit', [CirculistaController::class, 'edit'])->name('circulistas.edit');
     });
 
     Route::get('circulistas/{circulista}', [CirculistaController::class, 'show'])->name('circulistas.show');
 
-    Route::middleware('role:administrador')->group(function () {
+    Route::middleware('role:administrador,supervisor')->group(function () {
         Route::post('circulistas', [CirculistaController::class, 'store'])->name('circulistas.store');
         Route::put('circulistas/{circulista}', [CirculistaController::class, 'update'])->name('circulistas.update');
         Route::delete('circulistas/{circulista}', [CirculistaController::class, 'destroy'])->name('circulistas.destroy');
@@ -48,7 +48,7 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------
     Route::get('eventos', [EventoController::class, 'index'])->name('eventos.index');
 
-    Route::middleware('role:administrador')->group(function () {
+    Route::middleware('role:administrador,supervisor')->group(function () {
         Route::get('eventos/importar/masivo', [EventoController::class, 'showImportForm'])->name('eventos.import.form');
         Route::post('eventos/importar/masivo', [EventoController::class, 'importMasivo'])->name('eventos.import.submit');
         Route::get('eventos/create', [EventoController::class, 'create'])->name('eventos.create');
@@ -59,7 +59,7 @@ Route::middleware('auth')->group(function () {
     Route::get('eventos/{evento}/circular-retiro', [EventoController::class, 'circularRetiro'])->name('eventos.circular-retiro');
     Route::get('eventos/{evento}/circular-cocina', [EventoController::class, 'circularCocina'])->name('eventos.circular-cocina');
 
-    Route::middleware('role:administrador')->group(function () {
+    Route::middleware('role:administrador,supervisor')->group(function () {
         Route::post('eventos', [EventoController::class, 'store'])->name('eventos.store');
         Route::put('eventos/{evento}', [EventoController::class, 'update'])->name('eventos.update');
         Route::delete('eventos/{evento}', [EventoController::class, 'destroy'])->name('eventos.destroy');
@@ -68,10 +68,12 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------
     // OTROS (Búsqueda, Participaciones, Usuarios CRUD)
     // ----------------------------------------------------
-    Route::get('busqueda-avanzada', [BusquedaController::class, 'index'])->name('busqueda.avanzada');
+    Route::middleware('role:administrador,supervisor')->group(function () {
+        Route::get('busqueda-avanzada', [BusquedaController::class, 'index'])->name('busqueda.avanzada');
+        Route::resource('participaciones', ParticipacionController::class)->only(['store', 'update', 'destroy']);
+    });
 
     Route::middleware('role:administrador')->group(function () {
-        Route::resource('participaciones', ParticipacionController::class)->only(['store', 'update', 'destroy']);
         Route::resource('usuarios', UserController::class);
     });
 });

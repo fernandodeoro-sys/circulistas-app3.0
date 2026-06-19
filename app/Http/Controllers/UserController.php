@@ -50,7 +50,7 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:6|confirmed',
-            'role' => 'required|string|in:administrador,invitado',
+            'role' => 'required|string|in:administrador,supervisor,invitado',
         ]);
 
         User::create([
@@ -90,7 +90,7 @@ class UserController extends Controller
                 Rule::unique('users')->ignore($user->id),
             ],
             'password' => 'nullable|string|min:6|confirmed',
-            'role' => 'required|string|in:administrador,invitado',
+            'role' => 'required|string|in:administrador,supervisor,invitado',
         ]);
 
         $updateData = [

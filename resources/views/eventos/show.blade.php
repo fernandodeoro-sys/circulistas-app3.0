@@ -11,7 +11,7 @@
         Volver al listado
     </a>
 
-    @if(Auth::user()->role === 'administrador')
+    @if(in_array(Auth::user()->role, ['administrador', 'supervisor']))
     <div class="flex items-center gap-2">
         <a href="{{ route('eventos.edit', $evento->id) }}" 
            class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50">
@@ -130,8 +130,8 @@
                 <h4 class="text-sm font-bold text-slate-900">Foto del Evento (Retiro)</h4>
                 @if($evento->foto_evento)
                     <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-50 shadow-sm transition hover:shadow-md">
-                        <a href="{{ Storage::url($evento->foto_evento) }}" target="_blank">
-                            <img src="{{ Storage::url($evento->foto_evento) }}" alt="Foto del Evento" class="object-cover w-full h-full">
+                        <a href="{{ asset('storage/' . $evento->foto_evento) }}" target="_blank">
+                            <img src="{{ asset('storage/' . $evento->foto_evento) }}" alt="Foto del Evento" class="object-cover w-full h-full">
                         </a>
                     </div>
                 @else
@@ -149,8 +149,8 @@
                 <h4 class="text-sm font-bold text-slate-900">Foto de Cocina / Servidores</h4>
                 @if($evento->foto_cocina)
                     <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-50 shadow-sm transition hover:shadow-md">
-                        <a href="{{ Storage::url($evento->foto_cocina) }}" target="_blank">
-                            <img src="{{ Storage::url($evento->foto_cocina) }}" alt="Foto de la Cocina" class="object-cover w-full h-full">
+                        <a href="{{ asset('storage/' . $evento->foto_cocina) }}" target="_blank">
+                            <img src="{{ asset('storage/' . $evento->foto_cocina) }}" alt="Foto de la Cocina" class="object-cover w-full h-full">
                         </a>
                     </div>
                 @else
@@ -199,7 +199,7 @@
             </a>
 
             <!-- Agregar Participante -->
-            @if(Auth::user()->role === 'administrador')
+            @if(in_array(Auth::user()->role, ['administrador', 'supervisor']))
             <button type="button" 
                     data-bs-toggle="modal" 
                     data-bs-target="#addParticipantModal"
@@ -280,7 +280,7 @@
                                 {{ $participacion->observaciones ?: '—' }}
                             </td>
                              <td class="py-3.5 px-4 text-right">
-                                @if(Auth::user()->role === 'administrador')
+                                @if(in_array(Auth::user()->role, ['administrador', 'supervisor']))
                                 <div class="flex items-center justify-end gap-2.5">
                                     <!-- Editar -->
                                     <button type="button" 

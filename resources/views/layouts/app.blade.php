@@ -50,9 +50,11 @@
                         <a href="{{ route('eventos.index') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('eventos*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             Eventos
                         </a>
+                        @if(Auth::check() && in_array(Auth::user()->role, ['administrador', 'supervisor']))
                         <a href="{{ route('busqueda.avanzada') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('busqueda-avanzada*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             Búsqueda Avanzada
                         </a>
+                        @endif
                         @if(Auth::check() && Auth::user()->role === 'administrador')
                         <a href="{{ route('usuarios.index') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('usuarios*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             Usuarios
@@ -68,7 +70,7 @@
                             <div class="text-right">
                                 <div class="text-sm font-bold text-slate-900">{{ Auth::user()->name }}</div>
                                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                                    {{ Auth::user()->role === 'administrador' ? 'Administrador' : 'Invitado' }}
+                                    {{ ucfirst(Auth::user()->role) }}
                                 </div>
                             </div>
                             
