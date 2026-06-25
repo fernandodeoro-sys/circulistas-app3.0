@@ -13,6 +13,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
 
+    <!-- Tailwind CSS v4 CDN Browser Script (Fallback for environment without compiled assets/npm) -->
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>

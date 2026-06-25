@@ -359,27 +359,59 @@ class CirculistaController extends Controller
         ]);
 
         $personas = $request->input('personas');
+        
+        // 1. Cargar todos los circulistas activos en memoria para evitar consultas recurrentes
+        $allCirculistas = Circulista::select([
+            'id', 'nombre', 'apellido', 'email', 'celular', 'telefono', 
+            'fecha_nacimiento', 'sin_anio_nacimiento', 'domicilio', 'localidad', 'provincia'
+        ])->where('activo', true)->get();
+
+        // 2. Indexar en memoria por clave de nombre y por últimos 7 dígitos del teléfono
+        $nameIndex = [];
+        $phoneIndex = [];
+
+        foreach ($allCirculistas as $circulista) {
+            $nameKey = $this->normalizeString($circulista->apellido) . '|' . $this->normalizeString($circulista->nombre);
+            if (!isset($nameIndex[$nameKey])) {
+                $nameIndex[$nameKey] = $circulista;
+            }
+
+            if (!empty($circulista->celular)) {
+                $last7 = $this->getPhoneLast7($circulista->celular);
+                if ($last7 && !isset($phoneIndex[$last7])) {
+                    $phoneIndex[$last7] = $circulista;
+                }
+            }
+
+            if (!empty($circulista->telefono)) {
+                $last7 = $this->getPhoneLast7($circulista->telefono);
+                if ($last7 && !isset($phoneIndex[$last7])) {
+                    $phoneIndex[$last7] = $circulista;
+                }
+            }
+        }
+
         $coincidencias = [];
 
+        // 3. Realizar emparejamiento en memoria
         foreach ($personas as $index => $persona) {
             $nombre = trim($persona['nombre']);
             $apellido = trim($persona['apellido']);
             $celular = isset($persona['celular']) ? trim($persona['celular']) : '';
 
-            // 1. Intentar por nombre y apellido
-            $match = Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
-                ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido])
-                ->first();
+            $match = null;
 
-            // 2. Si no coincide, intentar por celular (últimos 7 dígitos)
+            // Intentar coincidencia por nombre y apellido
+            $nameKey = $this->normalizeString($apellido) . '|' . $this->normalizeString($nombre);
+            if (isset($nameIndex[$nameKey])) {
+                $match = $nameIndex[$nameKey];
+            }
+
+            // Si no coincide, intentar por celular (últimos 7 dígitos)
             if (!$match && !empty($celular)) {
-                $cleanCel = preg_replace('/[^\d]/', '', $celular);
-                if (strlen($cleanCel) >= 7) {
-                    $last7 = substr($cleanCel, -7);
-                    $match = Circulista::where(function($q) use ($last7) {
-                        $q->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
-                          ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
-                    })->first();
+                $last7 = $this->getPhoneLast7($celular);
+                if ($last7 && isset($phoneIndex[$last7])) {
+                    $match = $phoneIndex[$last7];
                 }
             }
 
@@ -404,4 +436,22 @@ class CirculistaController extends Controller
             'coincidencias' => $coincidencias
         ]);
     }
+
+    /**
+     * Normalizes a string: removes accents, converts to lowercase, and trims whitespace.
+     */
+    private function normalizeString(string $str): string
+    {
+        return strtolower(trim(preg_replace('/\s+/', ' ', \Illuminate\Support\Str::ascii($str))));
+    }
+
+    /**
+     * Extracts the last 7 digits of a phone number.
+     */
+    private function getPhoneLast7(string $phone): string
+    {
+        $clean = preg_replace('/[^\d]/', '', $phone);
+        return strlen($clean) >= 7 ? substr($clean, -7) : '';
+    }
 }
+

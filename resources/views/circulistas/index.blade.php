@@ -172,7 +172,7 @@
                             <div>
                                 <div class="font-semibold text-slate-900">{{ $circulista->apellido }}, {{ $circulista->nombre }}</div>
                                 @if($circulista->fecha_nacimiento)
-                                    <div class="text-xs text-slate-400">
+                                    <div class="text-xs text-slate-500 font-medium">
                                         @if($circulista->sin_anio_nacimiento)
                                             Nac: {{ $circulista->fecha_nacimiento->format('d/m') }} (Cumpleaños)
                                         @else
@@ -181,7 +181,7 @@
                                         @endif
                                     </div>
                                 @else
-                                    <div class="text-xs text-slate-300">Sin fecha nac.</div>
+                                    <div class="text-xs text-slate-400">Sin fecha nac.</div>
                                 @endif                            </div>
                         </div>
                     </td>
@@ -204,19 +204,19 @@
                                     {{ $circulista->telefono }}
                                 </div>
                             @else
-                                <span class="text-xs text-slate-400">Sin teléfono</span>
+                                <span class="text-xs text-slate-500">Sin teléfono</span>
                             @endif
                         </div>
-                        <div class="text-xs text-slate-400 mt-0.5">{{ $circulista->email ?: 'Sin correo' }}</div>
+                        <div class="text-xs text-slate-500 mt-0.5">{{ $circulista->email ?: 'Sin correo' }}</div>
                     </td>
                     
                     <!-- Ubicación -->
                     <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-600">
                         @if($circulista->localidad || $circulista->provincia)
                             <div>{{ $circulista->localidad ?: '' }}</div>
-                            <div class="text-xs text-slate-400">{{ $circulista->provincia ?: '' }}</div>
+                            <div class="text-xs text-slate-500">{{ $circulista->provincia ?: '' }}</div>
                         @else
-                            <span class="text-xs text-slate-400">Sin ubicación</span>
+                            <span class="text-xs text-slate-500">Sin ubicación</span>
                         @endif
                     </td>
                     

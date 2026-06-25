@@ -181,7 +181,7 @@
                                         <a href="{{ route('circulistas.show', $participacion->circulista_id) }}" class="font-bold text-slate-900 hover:text-indigo-600 transition">
                                             {{ $participacion->circulista->apellido }}, {{ $participacion->circulista->nombre }}
                                         </a>
-                                        <div class="text-xs text-slate-400 font-normal">
+                                        <div class="text-xs text-slate-500 font-normal">
                                             {{ $participacion->circulista->celular ?: $participacion->circulista->email ?: 'Sin datos de contacto' }}
                                         </div>
                                     </div>
@@ -193,7 +193,7 @@
                                 <a href="{{ route('eventos.show', $participacion->evento_id) }}" class="font-bold text-slate-800 hover:text-indigo-600 transition block">
                                     {{ $participacion->evento->tipoEvento->nombre ?? 'Retiro' }} #{{ $participacion->evento->numero_evento }}
                                 </a>
-                                <span class="text-xs font-normal text-slate-400 block">{{ $participacion->evento->lugar }}</span>
+                                <span class="text-xs font-normal text-slate-500 block">{{ $participacion->evento->lugar }}</span>
                             </td>
 
                             <!-- Rol -->

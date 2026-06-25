@@ -273,6 +273,7 @@ class EventoController extends Controller
         $rules = [
             'evento_modo' => 'required|in:existente,nuevo',
             'participantes' => 'required|array|min:1',
+            'participantes.*.db_id' => 'nullable|integer',
             'participantes.*.nombre' => 'required|string|max:100',
             'participantes.*.apellido' => 'required|string|max:100',
             'participantes.*.rol_id' => 'required|exists:roles,id',
@@ -339,25 +340,76 @@ class EventoController extends Controller
 
             $participantes = $request->input('participantes');
 
+            // 3.1 Cargar todos los circulistas activos en memoria
+            $allCirculistas = \App\Models\Circulista::select([
+                'id', 'nombre', 'apellido', 'email', 'celular', 'telefono', 
+                'fecha_nacimiento', 'sin_anio_nacimiento', 'domicilio', 'localidad', 'provincia'
+            ])->where('activo', true)->get();
+
+            // 3.2 Indexar circulistas en memoria
+            $idIndex = [];
+            $nameIndex = [];
+            $phoneIndex = [];
+
+            foreach ($allCirculistas as $circulista) {
+                $idIndex[$circulista->id] = $circulista;
+
+                $nameKey = $this->normalizeString($circulista->apellido) . '|' . $this->normalizeString($circulista->nombre);
+                if (!isset($nameIndex[$nameKey])) {
+                    $nameIndex[$nameKey] = $circulista;
+                }
+
+                if (!empty($circulista->celular)) {
+                    $last7 = $this->getPhoneLast7($circulista->celular);
+                    if ($last7 && !isset($phoneIndex[$last7])) {
+                        $phoneIndex[$last7] = $circulista;
+                    }
+                }
+
+                if (!empty($circulista->telefono)) {
+                    $last7 = $this->getPhoneLast7($circulista->telefono);
+                    if ($last7 && !isset($phoneIndex[$last7])) {
+                        $phoneIndex[$last7] = $circulista;
+                    }
+                }
+            }
+
+            // 3.3 Cargar todas las participaciones del evento destino en memoria
+            $existingParticipaciones = \App\Models\Participacion::where('evento_id', $eventoId)
+                ->get()
+                ->keyBy('circulista_id');
+
+            $participacionesToCreate = [];
+            
+            // Llevar registro de circulistas actualizados para no repetir la query de update
+            $updatedCirculistas = [];
+
             foreach ($participantes as $p) {
+                $dbId = isset($p['db_id']) ? $p['db_id'] : null;
                 $nombre = trim($p['nombre']);
                 $apellido = trim($p['apellido']);
-
-                // Buscar por coincidencia exacta de nombre y apellido (insensible a acentos)
-                $circulista = \App\Models\Circulista::whereRaw('unaccent(nombre) ilike unaccent(?)', [$nombre])
-                    ->whereRaw('unaccent(apellido) ilike unaccent(?)', [$apellido])
-                    ->first();
-
-                // Si no coincide, intentar buscar por celular (últimos 7 dígitos)
                 $celular = !empty($p['celular']) ? trim($p['celular']) : '';
+
+                $circulista = null;
+
+                // A. Intentar buscar por ID si viene pre-verificado del frontend
+                if ($dbId && isset($idIndex[$dbId])) {
+                    $circulista = $idIndex[$dbId];
+                }
+
+                // B. Si no, buscar por coincidencia exacta de nombre y apellido normalizados
+                if (!$circulista) {
+                    $nameKey = $this->normalizeString($apellido) . '|' . $this->normalizeString($nombre);
+                    if (isset($nameIndex[$nameKey])) {
+                        $circulista = $nameIndex[$nameKey];
+                    }
+                }
+
+                // C. Si no coincide, intentar buscar por celular (últimos 7 dígitos)
                 if (!$circulista && !empty($celular)) {
-                    $cleanCel = preg_replace('/[^\d]/', '', $celular);
-                    if (strlen($cleanCel) >= 7) {
-                        $last7 = substr($cleanCel, -7);
-                        $circulista = \App\Models\Circulista::where(function($q) use ($last7) {
-                            $q->whereRaw("regexp_replace(celular, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7])
-                              ->orWhereRaw("regexp_replace(telefono, '[^0-9]', '', 'g') LIKE ?", ['%' . $last7]);
-                        })->first();
+                    $last7 = $this->getPhoneLast7($celular);
+                    if ($last7 && isset($phoneIndex[$last7])) {
+                        $circulista = $phoneIndex[$last7];
                     }
                 }
 
@@ -388,8 +440,9 @@ class EventoController extends Controller
                         $updatedData['provincia'] = trim($p['provincia']);
                     }
                     
-                    if (!empty($updatedData)) {
+                    if (!empty($updatedData) && !isset($updatedCirculistas[$circulista->id])) {
                         $circulista->update($updatedData);
+                        $updatedCirculistas[$circulista->id] = true;
                     }
                 } else {
                     // Crear circulista nuevo
@@ -406,29 +459,51 @@ class EventoController extends Controller
                         'activo' => true
                     ]);
                     $personasCreadasCount++;
+
+                    // Agregar al índice en memoria para evitar crearlo duplicado
+                    // si vuelve a aparecer en la misma lista del Excel
+                    $idIndex[$circulista->id] = $circulista;
+                    
+                    $nameKey = $this->normalizeString($circulista->apellido) . '|' . $this->normalizeString($circulista->nombre);
+                    $nameIndex[$nameKey] = $circulista;
+
+                    if (!empty($circulista->celular)) {
+                        $last7 = $this->getPhoneLast7($circulista->celular);
+                        if ($last7) {
+                            $phoneIndex[$last7] = $circulista;
+                        }
+                    }
                 }
 
                 // Registrar la Participación
                 // Evitamos duplicar si la persona ya está vinculada a ese mismo evento
-                $participacionExistente = \App\Models\Participacion::where('circulista_id', $circulista->id)
-                    ->where('evento_id', $eventoId)
-                    ->first();
+                $participacionExistente = $existingParticipaciones->get($circulista->id);
 
                 if ($participacionExistente) {
-                    // Si ya existe, actualizamos su rol y grupo
-                    $participacionExistente->update([
-                        'rol_id' => $p['rol_id'],
-                        'grupo' => !empty($p['grupo']) ? trim($p['grupo']) : null
-                    ]);
+                    // Si ya existe, actualizamos su rol y grupo si son distintos
+                    $grupoVal = !empty($p['grupo']) ? trim($p['grupo']) : null;
+                    if ($participacionExistente->rol_id !== (int)$p['rol_id'] || $participacionExistente->grupo !== $grupoVal) {
+                        $participacionExistente->update([
+                            'rol_id' => $p['rol_id'],
+                            'grupo' => $grupoVal
+                        ]);
+                    }
                 } else {
-                    \App\Models\Participacion::create([
+                    $participacionesToCreate[] = [
                         'circulista_id' => $circulista->id,
                         'evento_id' => $eventoId,
                         'rol_id' => $p['rol_id'],
-                        'grupo' => !empty($p['grupo']) ? trim($p['grupo']) : null
-                    ]);
+                        'grupo' => !empty($p['grupo']) ? trim($p['grupo']) : null,
+                        'created_at' => now()->toDateTimeString(),
+                        'updated_at' => now()->toDateTimeString()
+                    ];
                     $participacionesCreadasCount++;
                 }
+            }
+
+            // Insertar todas las nuevas participaciones en una sola consulta
+            if (!empty($participacionesToCreate)) {
+                \App\Models\Participacion::insert($participacionesToCreate);
             }
 
             \Illuminate\Support\Facades\DB::commit();
@@ -452,5 +527,22 @@ class EventoController extends Controller
                 'message' => 'Ocurrió un error al procesar la importación: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Normalizes a string: removes accents, converts to lowercase, and trims whitespace.
+     */
+    private function normalizeString(string $str): string
+    {
+        return strtolower(trim(preg_replace('/\s+/', ' ', \Illuminate\Support\Str::ascii($str))));
+    }
+
+    /**
+     * Extracts the last 7 digits of a phone number.
+     */
+    private function getPhoneLast7(string $phone): string
+    {
+        $clean = preg_replace('/[^\d]/', '', $phone);
+        return strlen($clean) >= 7 ? substr($clean, -7) : '';
     }
 }
