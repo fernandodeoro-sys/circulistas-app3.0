@@ -911,8 +911,9 @@
                 
                 <!-- Fecha Nacimiento -->
                 <td class="px-2 py-2">
-                    <input type="date" value="${row.fecha_nacimiento}" 
-                           onchange="updateRowField(${index}, 'fecha_nacimiento', this.value)" 
+                    <input type="text" value="${formatToDDMMYYYY(row.fecha_nacimiento, row.sin_anio_nacimiento)}" 
+                           placeholder="dd/mm/aaaa"
+                           onchange="handleDateChange(${index}, this.value, this)" 
                            class="w-full text-slate-800 bg-transparent border-b border-transparent focus:border-indigo-500 focus:outline-none py-0.5">
                 </td>
                 
@@ -961,6 +962,39 @@
     // Actualizar campo de fila localmente
     function updateRowField(index, field, value) {
         IMPORT_DATA[index][field] = value;
+    }
+
+    // Formatear fecha YYYY-MM-DD a DD/MM/YYYY o DD/MM
+    function formatToDDMMYYYY(dateStr, sinAnio) {
+        if (!dateStr) return '';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) {
+            if (sinAnio) {
+                return `${parts[2]}/${parts[1]}`;
+            }
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        return dateStr;
+    }
+
+    // Manejar cambio en campo de fecha
+    function handleDateChange(index, value, inputElement) {
+        const res = parseDateString(value);
+        IMPORT_DATA[index].fecha_nacimiento = res.date;
+        IMPORT_DATA[index].sin_anio_nacimiento = res.sinAnio;
+        
+        if (res.date) {
+            inputElement.value = formatToDDMMYYYY(res.date, res.sinAnio);
+            inputElement.classList.remove('border-red-500', 'text-red-600');
+            inputElement.classList.add('text-slate-800');
+        } else if (value.trim() !== '') {
+            inputElement.classList.add('border-red-500', 'text-red-600');
+            inputElement.classList.remove('text-slate-800');
+        } else {
+            inputElement.value = '';
+            inputElement.classList.remove('border-red-500', 'text-red-600');
+            inputElement.classList.add('text-slate-800');
+        }
     }
 
     // Eliminar fila de grilla localmente

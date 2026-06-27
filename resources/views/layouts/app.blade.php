@@ -18,6 +18,9 @@
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
+    <!-- Flatpickr CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    
     <style>
         body {
             font-family: 'Instrument Sans', sans-serif;
@@ -162,5 +165,26 @@
         </div>
     </footer>
 
+    <!-- Flatpickr JS -->
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            flatpickr("input[type='date']", {
+                dateFormat: "Y-m-d",
+                altInput: true,
+                altFormat: "d/m/Y",
+                locale: "es",
+                allowInput: true,
+                onReady: function(selectedDates, dateStr, instance) {
+                    if (instance.altInput) {
+                        instance.altInput.placeholder = "dd/mm/aaaa";
+                        // Asegurar consistencia visual copiando clases del original
+                        instance.altInput.className = instance.input.className;
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
