@@ -6,7 +6,35 @@
 @source '../**/*.blade.php';
 @source '../**/*.js';
 
+:root {
+    /* Brand Primary Color Palette (Default: Indigo) */
+    --brand-50: #f5f3ff;
+    --brand-100: #e0e7ff;
+    --brand-200: #c7d2fe;
+    --brand-300: #a5b4fc;
+    --brand-400: #818cf8;
+    --brand-500: #6366f1;
+    --brand-600: #4f46e5;
+    --brand-700: #4338ca;
+    --brand-800: #3730a3;
+    --brand-900: #312e81;
+    --brand-950: #1e1b4b;
+}
+
 @theme {
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Remap indigo color family to custom variables */
+    --color-indigo-50: var(--brand-50);
+    --color-indigo-100: var(--brand-100);
+    --color-indigo-200: var(--brand-200);
+    --color-indigo-300: var(--brand-300);
+    --color-indigo-400: var(--brand-400);
+    --color-indigo-500: var(--brand-500);
+    --color-indigo-600: var(--brand-600);
+    --color-indigo-700: var(--brand-700);
+    --color-indigo-800: var(--brand-800);
+    --color-indigo-900: var(--brand-900);
+    --color-indigo-950: var(--brand-950);
 }

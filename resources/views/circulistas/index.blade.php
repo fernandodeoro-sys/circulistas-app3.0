@@ -70,7 +70,7 @@
         <p class="mt-1.5 text-sm text-slate-500">Administra el padrón de miembros activos e inactivos del movimiento.</p>
     </div>
     
-    <div class="flex items-center gap-3">
+    <div class="flex flex-wrap items-center gap-3">
         <!-- Contador de Registros -->
         <span class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-600/10">
             Total: {{ $circulistas->total() }} registros

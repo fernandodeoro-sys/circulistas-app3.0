@@ -70,7 +70,7 @@
                 <div class="flex items-center gap-4">
                     @auth
                         <div class="flex items-center gap-3">
-                            <div class="text-right">
+                            <div class="text-right hidden sm:block">
                                 <div class="text-sm font-bold text-slate-900">{{ Auth::user()->name }}</div>
                                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
                                     {{ ucfirst(Auth::user()->role) }}
@@ -85,7 +85,7 @@
                             <form action="{{ route('logout') }}" method="POST" class="inline">
                                 @csrf
                                 <button type="submit" 
-                                        class="rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                                        class="hidden sm:inline-flex rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                                         title="Cerrar Sesión">
                                     <svg class="h-4.5 w-4.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -99,9 +99,61 @@
                             Postgres Conectado
                         </span>
                     @endauth
+                    
+                    @auth
+                    <!-- Botón de Menú Móvil (Hamburguesa) -->
+                    <button type="button" id="mobile-menu-button" class="md:hidden rounded-xl border border-slate-200 bg-white p-2 text-slate-500 hover:text-slate-950 hover:bg-slate-50 transition cursor-pointer" aria-label="Menú Principal">
+                        <svg class="h-5 w-5 block" id="hamburger-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <svg class="h-5 w-5 hidden" id="close-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    @endauth
                 </div>
             </div>
         </div>
+        
+        <!-- Menú Móvil Desplegable -->
+        @auth
+        <div id="mobile-menu" class="hidden md:hidden border-t border-slate-100 bg-white px-4 py-3 space-y-1 transition-all duration-300">
+            <a href="{{ route('circulistas.index') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::is('circulistas*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                Circulistas
+            </a>
+            <a href="{{ route('eventos.index') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::is('eventos*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                Eventos
+            </a>
+            @if(in_array(Auth::user()->role, ['administrador', 'supervisor']))
+            <a href="{{ route('busqueda.avanzada') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::is('busqueda-avanzada*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                Búsqueda Avanzada
+            </a>
+            @endif
+            @if(Auth::user()->role === 'administrador')
+            <a href="{{ route('usuarios.index') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::is('usuarios*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                Usuarios
+            </a>
+            @endif
+            
+            <!-- Perfil y Cierre de Sesión en móvil -->
+            <div class="border-t border-slate-100 my-2 pt-2">
+                <div class="px-3.5 py-2">
+                    <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Usuario Conectado</div>
+                    <div class="text-sm font-bold text-slate-900">{{ Auth::user()->name }}</div>
+                    <div class="text-xs font-medium text-slate-500">{{ ucfirst(Auth::user()->role) }}</div>
+                </div>
+                <form action="{{ route('logout') }}" method="POST" class="block w-full">
+                    @csrf
+                    <button type="submit" class="w-full text-left rounded-lg px-3.5 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 transition cursor-pointer flex items-center gap-2">
+                        <svg class="h-4.5 w-4.5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Cerrar Sesión
+                    </button>
+                </form>
+            </div>
+        </div>
+        @endauth
     </header>
 
     <!-- Contenido Principal -->
@@ -167,6 +219,27 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
+            // Lógica para el menú móvil desplegable
+            const mobileMenuButton = document.getElementById('mobile-menu-button');
+            const mobileMenu = document.getElementById('mobile-menu');
+            const hamburgerIcon = document.getElementById('hamburger-icon');
+            const closeIcon = document.getElementById('close-icon');
+
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', function() {
+                    const isHidden = mobileMenu.classList.contains('hidden');
+                    if (isHidden) {
+                        mobileMenu.classList.remove('hidden');
+                        hamburgerIcon.classList.add('hidden');
+                        closeIcon.classList.remove('hidden');
+                    } else {
+                        mobileMenu.classList.add('hidden');
+                        hamburgerIcon.classList.remove('hidden');
+                        closeIcon.classList.add('hidden');
+                    }
+                });
+            }
+
             flatpickr("input[type='date']", {
                 dateFormat: "Y-m-d",
                 altInput: true,
