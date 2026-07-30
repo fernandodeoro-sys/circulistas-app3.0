@@ -71,18 +71,20 @@
             
             <!-- Logo y Encabezado -->
             <div class="flex flex-col items-center text-center mb-8">
-                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100 mb-4">
+                <div class="flex items-center justify-center bg-transparent mb-4">
                     @if(file_exists(public_path('images/logo-mcj.png')))
-                        <img src="{{ asset('images/logo-mcj.png') }}" class="h-10 w-10 object-contain" alt="Logo MCJ">
+                        <img src="{{ asset('images/logo-mcj.png') }}" class="h-20 w-auto max-h-24 object-contain" alt="Logo MCJ">
                     @else
                         <!-- Escudo Cruz MCJ SVG -->
-                        <svg class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                        </svg>
+                        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 shadow-sm border border-indigo-100">
+                            <svg class="h-10 w-10 text-indigo-700" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
                     @endif
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-600">MCJ</span></h1>
-                <p class="mt-1 text-sm text-slate-500 font-medium">Ingresa al sistema de gestión de circulistas</p>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-800 font-extrabold">MCJ</span></h1>
+                <p class="mt-1.5 text-sm text-slate-500 font-medium">Ingresa al sistema de gestión de circulistas</p>
             </div>
 
             <!-- Alertas de Estado/Error -->

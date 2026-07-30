@@ -34,15 +34,15 @@
                 <div class="flex items-center gap-8">
                     <a href="{{ url('/') }}" class="flex items-center gap-2.5 transition hover:opacity-90">
                         @if(file_exists(public_path('images/logo-mcj.png')))
-                            <img src="{{ asset('images/logo-mcj.png') }}" class="h-9 w-9 object-contain" alt="Logo MCJ">
+                            <img src="{{ asset('images/logo-mcj.png') }}" class="h-10 w-auto object-contain" alt="Logo MCJ">
                         @else
-                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-200">
+                            <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-700 text-white shadow-md shadow-indigo-200">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                                 </svg>
                             </div>
                         @endif
-                        <span class="text-lg font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-600">MCJ</span></span>
+                        <span class="text-lg font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-800 font-extrabold">MCJ</span></span>
                     </a>
                     
                     <!-- Navegación principal -->
@@ -56,6 +56,9 @@
                         @if(Auth::check() && in_array(Auth::user()->role, ['administrador', 'supervisor']))
                         <a href="{{ route('busqueda.avanzada') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('busqueda-avanzada*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             Búsqueda Avanzada
+                        </a>
+                        <a href="{{ route('busqueda.persona') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::is('busqueda-persona*') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                            Historial (2 Años)
                         </a>
                         <a href="{{ route('circulistas.duplicados') }}" class="rounded-lg px-3.5 py-2 text-sm font-medium transition-all {{ Request::routeIs('circulistas.duplicados') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                             Duplicados
@@ -130,6 +133,9 @@
             @if(in_array(Auth::user()->role, ['administrador', 'supervisor']))
             <a href="{{ route('busqueda.avanzada') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::is('busqueda-avanzada*') ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 Búsqueda Avanzada
+            </a>
+            <a href="{{ route('busqueda.persona') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::is('busqueda-persona*') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
+                Historial (2 Años)
             </a>
             <a href="{{ route('circulistas.duplicados') }}" class="block rounded-lg px-3.5 py-2.5 text-sm font-medium {{ Request::routeIs('circulistas.duplicados') ? 'bg-indigo-50 text-indigo-700 font-semibold' : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900' }}">
                 Duplicados
