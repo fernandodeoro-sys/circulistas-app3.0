@@ -42,7 +42,7 @@
                                 </svg>
                             </div>
                         @endif
-                        <span class="text-lg font-bold tracking-tight text-slate-900">Padrón <span class="text-[#94763e]">MCJ</span></span>
+                        <span class="text-lg font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-600">MCJ</span></span>
                     </a>
                     
                     <!-- Navegación principal -->

@@ -7,18 +7,18 @@
 @source '../**/*.js';
 
 :root {
-    /* Brand Primary Color Palette - Celeste de la imagen y Beige Crema */
-    --brand-50: #e8f0f8;
-    --brand-100: #d0e0f0;
-    --brand-200: #b5cfe8;
-    --brand-300: #8cb2db;  /* El Celeste de la Imagen */
-    --brand-400: #6f97c2;
-    --brand-500: #4f7aa8;
-    --brand-600: #f7eedb;  /* El Beige Crema */
-    --brand-700: #ebdcc0;  /* Beige Oscuro (Hover) */
-    --brand-800: #0b162f;  /* Azul marino de texto */
-    --brand-900: #070f20;
-    --brand-950: #f7eedb;
+    /* Brand Primary Color Palette (Default: Indigo) */
+    --brand-50: #f5f3ff;
+    --brand-100: #e0e7ff;
+    --brand-200: #c7d2fe;
+    --brand-300: #a5b4fc;
+    --brand-400: #818cf8;
+    --brand-500: #6366f1;
+    --brand-600: #4f46e5;
+    --brand-700: #4338ca;
+    --brand-800: #3730a3;
+    --brand-900: #312e81;
+    --brand-950: #1e1b4b;
 }
 
 @theme {
@@ -37,107 +37,4 @@
     --color-indigo-800: var(--brand-800);
     --color-indigo-900: var(--brand-900);
     --color-indigo-950: var(--brand-950);
-}
-
-/* --- ESTILO PREMIUM: FONDO CELESTE PASTEL / ACENTOS BEIGE --- */
-
-/* 1. Fondo de la Aplicación y Texto General */
-body, html {
-    background-color: #8cb2db !important; /* Celeste de la imagen */
-    color: #0b162f !important; /* Texto oscuro para legibilidad */
-}
-
-/* 2. Cabecera y Navbar */
-header {
-    background-color: rgba(140, 178, 219, 0.9) !important; /* Celeste translúcido */
-    border-bottom-color: #6f97c2 !important;
-    backdrop-filter: blur(12px);
-}
-header span.text-slate-900 {
-    color: #0b162f !important;
-}
-
-/* 3. Tarjetas, Tablas y Contenedores */
-.bg-white {
-    background-color: #a4c4e5 !important; /* Celeste ligeramente más claro para tarjetas */
-    color: #0b162f !important;
-    border-color: #6f97c2 !important;
-}
-.border-slate-200, .border-slate-200\/80, .border-slate-100 {
-    border-color: #6f97c2 !important;
-}
-
-/* 4. Títulos y Textos de Párrafos */
-.text-slate-900, .text-slate-800, h1, h2, h3, h4, h5, h6 {
-    color: #0b162f !important;
-}
-.text-slate-700, .text-slate-600, .text-slate-500, p {
-    color: #1a2e56 !important; /* Azul intermedio para subtítulos */
-}
-.text-slate-400 {
-    color: #2e4570 !important;
-}
-
-/* 5. Entradas de Texto, Selects y Formularios */
-input, select, textarea {
-    background-color: #b5cfe8 !important;
-    color: #0b162f !important;
-    border-color: #6f97c2 !important;
-}
-input::placeholder {
-    color: #2e4570 !important;
-}
-input:focus, select:focus, textarea:focus {
-    border-color: #f7eedb !important;
-    box-shadow: 0 0 0 1px #f7eedb !important;
-}
-
-/* 6. Botones Primarios (Fondo beige y texto azul oscuro) */
-.bg-indigo-600, .bg-indigo-700, [class*="bg-indigo-600"], [class*="bg-indigo-700"] {
-    background-color: #f7eedb !important;
-    color: #0b162f !important;
-    border-color: #f7eedb !important;
-}
-.bg-indigo-600:hover, .bg-indigo-700:hover {
-    background-color: #ebdcc0 !important;
-    color: #0b162f !important;
-}
-.bg-indigo-600 svg, .bg-indigo-700 svg {
-    stroke: #0b162f !important;
-}
-
-/* 7. Estados Activos y Badges */
-.bg-indigo-50 {
-    background-color: #7da5ce !important; /* Celeste oscuro para badges */
-    color: #f7eedb !important;
-}
-.text-indigo-700, .text-indigo-600 {
-    color: #f7eedb !important;
-}
-
-/* Elemento activo en el menú de navegación (Beige con texto oscuro) */
-header nav a.bg-indigo-50 {
-    background-color: #f7eedb !important;
-    color: #0b162f !important;
-}
-
-/* 8. Botones Secundarios (Esquema/Borde o Fondo Blanco original) */
-.bg-white.text-slate-700, .border-slate-200.bg-white {
-    background-color: #7da5ce !important;
-    color: #f7eedb !important;
-    border-color: #6f97c2 !important;
-}
-.bg-white.text-slate-700:hover, .border-slate-200.bg-white:hover {
-    background-color: #6f97c2 !important;
-}
-
-/* 9. Elementos de Tablas y Listados */
-.bg-slate-50\/50, .bg-slate-50, .bg-slate-100 {
-    background-color: #a4c4e5 !important;
-}
-thead.bg-slate-50\/70 {
-    background-color: #7da5ce !important;
-}
-tr.hover\:bg-slate-50\/50:hover {
-    background-color: rgba(105, 151, 194, 0.4) !important;
 }

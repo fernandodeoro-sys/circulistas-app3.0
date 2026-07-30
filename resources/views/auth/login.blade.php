@@ -18,8 +18,7 @@
     <style>
         body {
             font-family: 'Instrument Sans', sans-serif;
-            background-color: #8cb2db; /* Celeste de la imagen */
-            color: #0b162f;
+            background-color: #f8fafc; /* bg-slate-50 */
         }
         /* Fade in animation */
         @keyframes fadeIn {
@@ -27,31 +26,28 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .btn-premium {
-            background: #f7eedb !important; /* Beige Crema */
-            color: #0b162f !important;
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
             border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
         }
         .btn-premium:hover {
-            background: #ebdcc0 !important; /* Beige Crema Oscuro */
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
             transform: translateY(-1px);
         }
         .btn-premium:active {
             transform: translateY(1px) scale(0.98);
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+            box-shadow: 0 2px 10px rgba(79, 70, 229, 0.2) !important;
         }
         .input-premium {
-            background-color: #b5cfe8 !important;
-            color: #0b162f !important;
-            border: 1px solid #6f97c2 !important;
+            border: 1px solid #cbd5e1 !important;
             transition: all 0.15s ease-in-out !important;
         }
         .input-premium:focus {
-            border-color: #f7eedb !important;
-            box-shadow: 0 0 0 3px rgba(247, 238, 219, 0.3) !important;
-            background-color: #b5cfe8 !important;
+            border-color: #4f46e5 !important;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
+            background-color: #ffffff !important;
         }
     </style>
 </head>
@@ -75,17 +71,17 @@
             
             <!-- Logo y Encabezado -->
             <div class="flex flex-col items-center text-center mb-8">
-                <div class="flex h-28 w-28 items-center justify-center mb-4">
+                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 shadow-sm border border-indigo-100 mb-4">
                     @if(file_exists(public_path('images/logo-mcj.png')))
-                        <img src="{{ asset('images/logo-mcj.png') }}" class="h-28 w-28 object-contain" alt="Logo MCJ">
+                        <img src="{{ asset('images/logo-mcj.png') }}" class="h-10 w-10 object-contain" alt="Logo MCJ">
                     @else
                         <!-- Escudo Cruz MCJ SVG -->
-                        <svg class="h-20 w-20 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <svg class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                         </svg>
                     @endif
                 </div>
-                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Padrón <span class="text-[#94763e]">MCJ</span></h1>
+                <h1 class="text-2xl font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-600">MCJ</span></h1>
                 <p class="mt-1 text-sm text-slate-500 font-medium">Ingresa al sistema de gestión de circulistas</p>
             </div>
 
