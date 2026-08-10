@@ -7,8 +7,13 @@ use App\Http\Controllers\ParticipacionController;
 use App\Http\Controllers\BusquedaController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\InvitadoController;
 
-// Rutas Públicas (Huéspedes)
+// Rutas Públicas (Modo Invitado y Login)
+Route::get('consulta-invitado', [InvitadoController::class, 'index'])->name('invitado.consulta');
+Route::get('consulta-invitado/circular-retiro/{evento}', [InvitadoController::class, 'circularRetiro'])->name('invitado.circular-retiro');
+Route::get('consulta-invitado/circular-cocina/{evento}', [InvitadoController::class, 'circularCocina'])->name('invitado.circular-cocina');
+
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
     Route::post('login', [AuthController::class, 'login']);

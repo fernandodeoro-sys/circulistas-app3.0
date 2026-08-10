@@ -157,6 +157,23 @@
                 </button>
             </form>
 
+            <!-- Separador -->
+            <div class="relative flex py-3 items-center">
+                <div class="flex-grow border-t border-slate-200"></div>
+                <span class="flex-shrink mx-3 text-[11px] font-bold text-slate-400 uppercase tracking-wider">o bien</span>
+                <div class="flex-grow border-t border-slate-200"></div>
+            </div>
+
+            <!-- Botón Acceso Invitado -->
+            <a href="{{ route('invitado.consulta') }}"
+               class="w-full flex justify-center items-center gap-2 rounded-2xl py-3 text-sm font-semibold text-slate-700 bg-slate-100/90 hover:bg-slate-200/80 border border-slate-200/80 transition shadow-sm">
+                <svg class="h-4.5 w-4.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Ingresar en Modo Invitado
+            </a>
+
         </div>
     </div>
 
