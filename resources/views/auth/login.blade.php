@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-50">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -18,7 +18,7 @@
     <style>
         body {
             font-family: 'Instrument Sans', sans-serif;
-            background-color: #f8fafc; /* bg-slate-50 */
+            background-color: #8cb2db; /* Celeste de la imagen */
         }
         /* Fade in animation */
         @keyframes fadeIn {
@@ -26,13 +26,14 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .btn-premium {
-            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+            background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-700) 100%) !important;
             border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
             box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            border-radius: 1rem !important; /* matches rounded-2xl */
         }
         .btn-premium:hover {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+            background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%) !important;
             box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
             transform: translateY(-1px);
         }
@@ -45,7 +46,7 @@
             transition: all 0.15s ease-in-out !important;
         }
         .input-premium:focus {
-            border-color: #4f46e5 !important;
+            border-color: var(--brand-600) !important;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
             background-color: #ffffff !important;
         }

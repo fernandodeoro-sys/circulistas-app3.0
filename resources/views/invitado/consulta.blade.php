@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es" class="h-full bg-slate-50">
+<html lang="es" class="h-full">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,13 +25,14 @@
             color: #ffffff !important;
         }
         .btn-premium {
-            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%) !important;
+            background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-700) 100%) !important;
             box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25) !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             color: #ffffff !important;
+            border-radius: 0.75rem !important; /* matches rounded-xl */
         }
         .btn-premium:hover {
-            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%) !important;
+            background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%) !important;
             transform: translateY(-1px);
         }
     </style>

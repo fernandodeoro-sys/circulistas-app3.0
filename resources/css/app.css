@@ -38,3 +38,7 @@
     --color-indigo-900: var(--brand-900);
     --color-indigo-950: var(--brand-950);
 }
+
+body {
+    background-color: #8cb2db !important;
+}

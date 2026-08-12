@@ -64,8 +64,8 @@ class EventoController extends Controller
             'lugar' => 'required|string|max:255',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'foto_evento' => 'nullable|image|max:2048',
-            'foto_cocina' => 'nullable|image|max:2048',
+            'foto_evento' => 'nullable|image|max:10240',
+            'foto_cocina' => 'nullable|image|max:10240',
             'observaciones' => 'nullable|string',
         ]);
 
@@ -134,8 +134,8 @@ class EventoController extends Controller
             'lugar' => 'required|string|max:255',
             'fecha_inicio' => 'required|date',
             'fecha_fin' => 'required|date|after_or_equal:fecha_inicio',
-            'foto_evento' => 'nullable|image|max:2048',
-            'foto_cocina' => 'nullable|image|max:2048',
+            'foto_evento' => 'nullable|image|max:10240',
+            'foto_cocina' => 'nullable|image|max:10240',
             'observaciones' => 'nullable|string',
         ]);
 
