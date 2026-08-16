@@ -19,6 +19,7 @@
         body {
             font-family: 'Instrument Sans', sans-serif;
             background-color: #8cb2db; /* Celeste de la imagen */
+            color: #0b162f;
         }
         /* Fade in animation */
         @keyframes fadeIn {
@@ -26,29 +27,31 @@
             to { opacity: 1; transform: translateY(0); }
         }
         .btn-premium {
-            background: linear-gradient(135deg, var(--brand-600) 0%, var(--brand-700) 100%) !important;
+            background: #f7eedb !important; /* Beige Crema */
+            color: #0b162f !important;
             border-top: 1px solid rgba(255, 255, 255, 0.15) !important;
-            box-shadow: 0 4px 15px rgba(79, 70, 229, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
             transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
-            border-radius: 1rem !important; /* matches rounded-2xl */
         }
         .btn-premium:hover {
-            background: linear-gradient(135deg, var(--brand-500) 0%, var(--brand-600) 100%) !important;
-            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+            background: #ebdcc0 !important; /* Beige Crema Oscuro */
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
             transform: translateY(-1px);
         }
         .btn-premium:active {
             transform: translateY(1px) scale(0.98);
-            box-shadow: 0 2px 10px rgba(79, 70, 229, 0.2) !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
         }
         .input-premium {
-            border: 1px solid #cbd5e1 !important;
+            background-color: #b5cfe8 !important;
+            color: #0b162f !important;
+            border: 1px solid #6f97c2 !important;
             transition: all 0.15s ease-in-out !important;
         }
         .input-premium:focus {
-            border-color: var(--brand-600) !important;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12) !important;
-            background-color: #ffffff !important;
+            border-color: #f7eedb !important;
+            box-shadow: 0 0 0 3px rgba(247, 238, 219, 0.3) !important;
+            background-color: #b5cfe8 !important;
         }
     </style>
 </head>
@@ -84,7 +87,7 @@
                         </div>
                     @endif
                 </div>
-                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Padrón <span class="text-indigo-800 font-extrabold">MCJ</span></h1>
+                <h1 class="text-3xl font-bold tracking-tight text-slate-900">Padrón <span class="text-[#94763e] font-extrabold">MCJ</span></h1>
                 <p class="mt-1.5 text-sm text-slate-500 font-medium">Ingresa al sistema de gestión de circulistas</p>
             </div>
 

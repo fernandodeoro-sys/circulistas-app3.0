@@ -439,15 +439,57 @@ class CirculistaController extends Controller
     }
 
     /**
-     * Display a listing of circulistas that have duplicated Apellido and Nombre.
+     * Display a listing of circulistas that have duplicated records based on selected criteria.
      */
     public function duplicados(Request $request)
     {
-        // Subconsulta base para encontrar grupos con Apellido y Nombre repetidos
-        $subquery = DB::table('circulistas')
-            ->selectRaw('unaccent(lower(trim(apellido))) as norm_apellido, unaccent(lower(trim(nombre))) as norm_nombre, count(*) as total_repetidos')
-            ->groupByRaw('unaccent(lower(trim(apellido))), unaccent(lower(trim(nombre)))')
-            ->havingRaw('count(*) > 1');
+        $criterio = $request->input('criterio', 'nombre_apellido');
+        if (!in_array($criterio, ['nombre_apellido', 'celular', 'telefono', 'email', 'fecha_nacimiento'])) {
+            $criterio = 'nombre_apellido';
+        }
+
+        // Subconsulta base para encontrar duplicados
+        $subquery = DB::table('circulistas');
+
+        switch ($criterio) {
+            case 'celular':
+                $subquery->selectRaw("regexp_replace(celular, '\D', '', 'g') as norm_celular, count(*) as total_repetidos")
+                    ->whereNotNull('celular')
+                    ->whereRaw("regexp_replace(celular, '\D', '', 'g') != ''")
+                    ->groupByRaw("regexp_replace(celular, '\D', '', 'g')")
+                    ->havingRaw('count(*) > 1');
+                break;
+
+            case 'telefono':
+                $subquery->selectRaw("regexp_replace(telefono, '\D', '', 'g') as norm_telefono, count(*) as total_repetidos")
+                    ->whereNotNull('telefono')
+                    ->whereRaw("regexp_replace(telefono, '\D', '', 'g') != ''")
+                    ->groupByRaw("regexp_replace(telefono, '\D', '', 'g')")
+                    ->havingRaw('count(*) > 1');
+                break;
+
+            case 'email':
+                $subquery->selectRaw("lower(trim(email)) as norm_email, count(*) as total_repetidos")
+                    ->whereNotNull('email')
+                    ->whereRaw("lower(trim(email)) != ''")
+                    ->groupByRaw("lower(trim(email))")
+                    ->havingRaw('count(*) > 1');
+                break;
+
+            case 'fecha_nacimiento':
+                $subquery->selectRaw("fecha_nacimiento, count(*) as total_repetidos")
+                    ->whereNotNull('fecha_nacimiento')
+                    ->groupBy("fecha_nacimiento")
+                    ->havingRaw('count(*) > 1');
+                break;
+
+            case 'nombre_apellido':
+            default:
+                $subquery->selectRaw('unaccent(lower(trim(apellido))) as norm_apellido, unaccent(lower(trim(nombre))) as norm_nombre, count(*) as total_repetidos')
+                    ->groupByRaw('unaccent(lower(trim(apellido))), unaccent(lower(trim(nombre)))')
+                    ->havingRaw('count(*) > 1');
+                break;
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -459,7 +501,10 @@ class CirculistaController extends Controller
                     foreach ($words as $word) {
                         $q->where(function ($subQ) use ($word) {
                             $subQ->whereRaw('unaccent(nombre) ilike unaccent(?)', ["%{$word}%"])
-                                 ->orWhereRaw('unaccent(apellido) ilike unaccent(?)', ["%{$word}%"]);
+                                 ->orWhereRaw('unaccent(apellido) ilike unaccent(?)', ["%{$word}%"])
+                                 ->orWhere('celular', 'like', "%{$word}%")
+                                 ->orWhere('telefono', 'like', "%{$word}%")
+                                 ->orWhere('email', 'like', "%{$word}%");
                         });
                     }
                 });
@@ -471,11 +516,28 @@ class CirculistaController extends Controller
         $totalGrupos = $todosLosGrupos->count();
         $totalRegistros = $todosLosGrupos->sum('total_repetidos');
 
+        // Ordenar según el criterio
+        switch ($criterio) {
+            case 'celular':
+                $subquery->orderBy('norm_celular');
+                break;
+            case 'telefono':
+                $subquery->orderBy('norm_telefono');
+                break;
+            case 'email':
+                $subquery->orderBy('norm_email');
+                break;
+            case 'fecha_nacimiento':
+                $subquery->orderBy('fecha_nacimiento', 'desc');
+                break;
+            case 'nombre_apellido':
+            default:
+                $subquery->orderBy('norm_apellido')->orderBy('norm_nombre');
+                break;
+        }
+
         // Paginar los grupos repetidos
-        $gruposPaginados = $subquery->orderBy('norm_apellido')
-            ->orderBy('norm_nombre')
-            ->paginate(10)
-            ->withQueryString();
+        $gruposPaginados = $subquery->paginate(10)->withQueryString();
 
         // Traer todos los circulistas pertenecientes a los grupos de la página actual
         $circulistasPorGrupo = collect();
@@ -483,12 +545,29 @@ class CirculistaController extends Controller
         if ($gruposPaginados->count() > 0) {
             $queryCirculistas = Circulista::with('participaciones');
 
-            $queryCirculistas->where(function ($q) use ($gruposPaginados) {
+            $queryCirculistas->where(function ($q) use ($gruposPaginados, $criterio) {
                 foreach ($gruposPaginados as $grupo) {
-                    $q->orWhere(function ($subQ) use ($grupo) {
-                        $subQ->whereRaw('unaccent(lower(trim(apellido))) = ?', [$grupo->norm_apellido])
-                             ->whereRaw('unaccent(lower(trim(nombre))) = ?', [$grupo->norm_nombre]);
-                    });
+                    switch ($criterio) {
+                        case 'celular':
+                            $q->orWhereRaw("regexp_replace(celular, '\D', '', 'g') = ?", [$grupo->norm_celular]);
+                            break;
+                        case 'telefono':
+                            $q->orWhereRaw("regexp_replace(telefono, '\D', '', 'g') = ?", [$grupo->norm_telefono]);
+                            break;
+                        case 'email':
+                            $q->orWhereRaw("lower(trim(email)) = ?", [$grupo->norm_email]);
+                            break;
+                        case 'fecha_nacimiento':
+                            $q->orWhere('fecha_nacimiento', $grupo->fecha_nacimiento);
+                            break;
+                        case 'nombre_apellido':
+                        default:
+                            $q->orWhere(function ($subQ) use ($grupo) {
+                                $subQ->whereRaw('unaccent(lower(trim(apellido))) = ?', [$grupo->norm_apellido])
+                                     ->whereRaw('unaccent(lower(trim(nombre))) = ?', [$grupo->norm_nombre]);
+                            });
+                            break;
+                    }
                 }
             });
 
@@ -497,13 +576,87 @@ class CirculistaController extends Controller
                 ->orderBy('id', 'asc')
                 ->get();
 
-            // Agrupar por norma de Apellido + Nombre
-            $circulistasPorGrupo = $registrosPagina->groupBy(function ($item) {
-                return $this->normalizeString($item->apellido) . '|' . $this->normalizeString($item->nombre);
+            // Agrupar los registros correspondientes
+            $circulistasPorGrupo = $registrosPagina->groupBy(function ($item) use ($criterio) {
+                switch ($criterio) {
+                    case 'celular':
+                        return preg_replace('/\D/', '', $item->celular);
+                    case 'telefono':
+                        return preg_replace('/\D/', '', $item->telefono);
+                    case 'email':
+                        return strtolower(trim($item->email));
+                    case 'fecha_nacimiento':
+                        return $item->fecha_nacimiento ? $item->fecha_nacimiento->format('Y-m-d') : '';
+                    case 'nombre_apellido':
+                    default:
+                        return $this->normalizeString($item->apellido) . '|' . $this->normalizeString($item->nombre);
+                }
             });
         }
 
-        return view('circulistas.duplicados', compact('gruposPaginados', 'circulistasPorGrupo', 'totalGrupos', 'totalRegistros'));
+        // Enriquecer cada grupo paginado para que la vista sea genérica y limpia
+        $gruposPaginados->getCollection()->transform(function ($grupo) use ($criterio, $circulistasPorGrupo) {
+            switch ($criterio) {
+                case 'celular':
+                    $key = $grupo->norm_celular;
+                    $detail = 'registros con el mismo celular';
+                    break;
+                case 'telefono':
+                    $key = $grupo->norm_telefono;
+                    $detail = 'registros con el mismo teléfono';
+                    break;
+                case 'email':
+                    $key = $grupo->norm_email;
+                    $detail = 'registros con el mismo email';
+                    break;
+                case 'fecha_nacimiento':
+                    $key = $grupo->fecha_nacimiento;
+                    $detail = 'registros con la misma fecha de nacimiento';
+                    break;
+                case 'nombre_apellido':
+                default:
+                    $key = $grupo->norm_apellido . '|' . $grupo->norm_nombre;
+                    $detail = 'registros con el mismo nombre y apellido';
+                    break;
+            }
+
+            $registros = $circulistasPorGrupo->get($key, collect());
+            $primerRegistro = $registros->first();
+
+            switch ($criterio) {
+                case 'celular':
+                    $label = $primerRegistro ? 'Celular: ' . $primerRegistro->celular : $key;
+                    break;
+                case 'telefono':
+                    $label = $primerRegistro ? 'Teléfono: ' . $primerRegistro->telefono : $key;
+                    break;
+                case 'email':
+                    $label = $primerRegistro ? 'Email: ' . $primerRegistro->email : $key;
+                    break;
+                case 'fecha_nacimiento':
+                    if ($primerRegistro && $primerRegistro->fecha_nacimiento) {
+                        $label = 'Fecha Nacimiento: ' . ($primerRegistro->sin_anio_nacimiento 
+                            ? $primerRegistro->fecha_nacimiento->format('d/m') . ' (Sin año)' 
+                            : $primerRegistro->fecha_nacimiento->format('d/m/Y'));
+                    } else {
+                        $label = $key;
+                    }
+                    break;
+                case 'nombre_apellido':
+                default:
+                    $label = $primerRegistro ? $primerRegistro->apellido . ', ' . $primerRegistro->nombre : strtoupper(str_replace('|', ' ', $key));
+                    break;
+            }
+
+            $grupo->grupo_key = $key;
+            $grupo->grupo_label = $label;
+            $grupo->grupo_detail = $detail;
+            $grupo->registros = $registros;
+
+            return $grupo;
+        });
+
+        return view('circulistas.duplicados', compact('gruposPaginados', 'totalGrupos', 'totalRegistros', 'criterio'));
     }
 
     /**

@@ -20,7 +20,19 @@
             </span>
         </h1>
         <p class="mt-1 text-sm text-slate-500">
-            Identifica y compara registros que comparten el mismo Apellido y Nombre para resolver duplicaciones.
+            <span id="stats-description">
+                @if($criterio === 'celular')
+                    Identifica y compara registros que comparten el mismo número de celular para resolver duplicaciones.
+                @elseif($criterio === 'telefono')
+                    Identifica y compara registros que comparten el mismo número de teléfono para resolver duplicaciones.
+                @elseif($criterio === 'email')
+                    Identifica y compara registros que comparten el mismo correo electrónico para resolver duplicaciones.
+                @elseif($criterio === 'fecha_nacimiento')
+                    Identifica y compara registros que comparten la misma fecha de nacimiento para resolver duplicaciones.
+                @else
+                    Identifica y compara registros que comparten el mismo Apellido y Nombre para resolver duplicaciones.
+                @endif
+            </span>
         </p>
     </div>
     
@@ -30,7 +42,20 @@
             <svg class="h-4 w-4 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            {{ $totalGrupos }} personas duplicadas
+            <span id="stats-total-grupos">
+                {{ $totalGrupos }} 
+                @if($criterio === 'celular')
+                    celulares duplicados
+                @elseif($criterio === 'telefono')
+                    teléfonos duplicados
+                @elseif($criterio === 'email')
+                    emails duplicados
+                @elseif($criterio === 'fecha_nacimiento')
+                    fechas duplicadas
+                @else
+                    personas duplicadas
+                @endif
+            </span>
         </span>
         
         <!-- Indicador de Total de Registros Afectados -->
@@ -38,7 +63,7 @@
             <svg class="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
             </svg>
-            {{ $totalRegistros }} fichas afectadas
+            <span id="stats-total-registros">{{ $totalRegistros }} fichas afectadas</span>
         </span>
     </div>
 </div>
@@ -80,11 +105,54 @@
 
     <!-- Contenedor dinámico de resultados -->
     <div id="live-search-container" class="transition-opacity duration-200 space-y-6">
+        
+        <!-- Selector de Criterio de Duplicación (Premium Tailwind Tab System) -->
+        <div class="border border-slate-200/80 bg-slate-50/50 rounded-2xl p-1.5 shadow-sm flex flex-wrap gap-1">
+            <button type="button" onclick="changeCriterio('nombre_apellido')" 
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer {{ $criterio === 'nombre_apellido' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm' }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Nombre y Apellido
+            </button>
+            
+            <button type="button" onclick="changeCriterio('celular')" 
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer {{ $criterio === 'celular' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm' }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Celular
+            </button>
+
+            <button type="button" onclick="changeCriterio('telefono')" 
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer {{ $criterio === 'telefono' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm' }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Teléfono
+            </button>
+
+            <button type="button" onclick="changeCriterio('email')" 
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer {{ $criterio === 'email' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm' }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Email
+            </button>
+
+            <button type="button" onclick="changeCriterio('fecha_nacimiento')" 
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold transition-all cursor-pointer {{ $criterio === 'fecha_nacimiento' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm' }}">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Fecha Nacimiento
+            </button>
+        </div>
+
         @if($totalGrupos > 0)
             @foreach($gruposPaginados as $grupo)
                 @php
-                    $key = $grupo->norm_apellido . '|' . $grupo->norm_nombre;
-                    $registros = $circulistasPorGrupo->get($key, collect());
+                    $registros = $grupo->registros;
                     $primerRegistro = $registros->first();
                 @endphp
 
@@ -99,10 +167,10 @@
                             </div>
                             <div>
                                 <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
-                                    {{ $primerRegistro ? $primerRegistro->apellido . ', ' . $primerRegistro->nombre : strtoupper($grupo->norm_apellido . ' ' . $grupo->norm_nombre) }}
+                                    {{ $grupo->grupo_label }}
                                 </h3>
                                 <div class="text-xs text-slate-500">
-                                    {{ $grupo->total_repetidos }} registros encontrados con este mismo nombre y apellido
+                                    {{ $grupo->total_repetidos }} {{ $grupo->grupo_detail }}
                                 </div>
                             </div>
                         </div>
@@ -215,9 +283,9 @@
                                             <div class="flex items-center justify-center gap-2">
                                                 <!-- Ver Ficha -->
                                                 <a href="{{ route('circulistas.show', $circulista->id) }}" 
-                                                   target="_blank"
-                                                   title="Ver Ficha Completa (Abre en nueva pestaña)"
-                                                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition hover:text-indigo-600 focus:outline-none">
+                                                    target="_blank"
+                                                    title="Ver Ficha Completa (Abre en nueva pestaña)"
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition hover:text-indigo-600 focus:outline-none">
                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
@@ -226,9 +294,9 @@
 
                                                 <!-- Editar -->
                                                 <a href="{{ route('circulistas.edit', $circulista->id) }}"
-                                                   target="_blank"
-                                                   title="Editar Ficha (Abre en nueva pestaña)"
-                                                   class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition hover:text-indigo-600 focus:outline-none">
+                                                    target="_blank"
+                                                    title="Editar Ficha (Abre en nueva pestaña)"
+                                                    class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 transition hover:text-indigo-600 focus:outline-none">
                                                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                                         <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
@@ -236,9 +304,9 @@
 
                                                 <!-- Eliminar -->
                                                 <form action="{{ route('circulistas.destroy', $circulista->id) }}" 
-                                                      method="POST" 
-                                                      class="inline" 
-                                                      onsubmit="return confirm('¿Estás seguro de eliminar el registro #{{ $circulista->id }} de {{ $circulista->nombre }} {{ $circulista->apellido }}?');">
+                                                        method="POST" 
+                                                        class="inline" 
+                                                        onsubmit="return confirm('¿Estás seguro de eliminar el registro #{{ $circulista->id }} de {{ $circulista->nombre }} {{ $circulista->apellido }}?');">
                                                     @csrf
                                                     @method('DELETE')
                                                     <button type="submit" 
@@ -280,14 +348,14 @@
                     <h3 class="text-xl font-bold text-slate-900">¡Todo en orden!</h3>
                     <p class="text-sm text-slate-600 max-w-md">
                         @if(request('search'))
-                            No se encontraron registros duplicados que coincidan con la búsqueda "<strong>{{ request('search') }}</strong>".
+                            No se encontraron registros duplicados que coincidan con la búsqueda "<strong>{{ request('search') }}</strong>" con el criterio seleccionado.
                         @else
-                            No se detectaron circulistas repetidos por Apellido y Nombre en el padrón. La base de datos se encuentra limpia.
+                            No se detectaron circulistas repetidos bajo el criterio seleccionado en el padrón. La base de datos se encuentra limpia.
                         @endif
                     </p>
-                    @if(request('search'))
+                    @if(request('search') || request('criterio'))
                         <a href="{{ route('circulistas.duplicados') }}" class="mt-2 inline-flex items-center justify-center rounded-xl bg-white border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 transition">
-                            Ver todos los duplicados
+                            Restaurar filtros y ver todos
                         </a>
                     @endif
                 </div>
@@ -298,6 +366,13 @@
 
 <script>
     let debounceTimer;
+
+    function changeCriterio(criterio) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('criterio', criterio);
+        url.searchParams.delete('page'); // Reiniciar a página 1 al cambiar de criterio
+        loadResults(url.toString());
+    }
 
     function handleLiveSearch() {
         clearTimeout(debounceTimer);
@@ -337,6 +412,15 @@
                 container.innerHTML = newContainer.innerHTML;
                 container.style.opacity = '1';
             }
+            
+            // Actualizar estadísticas y descripción en el encabezado
+            ['stats-total-grupos', 'stats-total-registros', 'stats-description'].forEach(id => {
+                const newElem = doc.getElementById(id);
+                const currentElem = document.getElementById(id);
+                if (newElem && currentElem) {
+                    currentElem.innerHTML = newElem.innerHTML;
+                }
+            });
             
             // Actualizar URL del navegador
             history.pushState(null, '', url);

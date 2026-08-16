@@ -57,7 +57,12 @@ Para evitar duplicar fichas de una misma persona en la base de datos:
   1. Mismo número de `celular` (normalizado solo a dígitos).
   2. Misma `fecha_nacimiento`.
 - **Verificación AJAX en Vivo:** Durante la carga del formulario, el sistema consulta asíncronamente si existe un circulista coincidente para prevenir el guardado antes de enviar.
-- **Módulo de Duplicados:** Agrupa todos los registros que comparten el mismo `Apellido` y `Nombre` normalizado para facilitar su revisión visual.
+- **Módulo de Duplicados:** Permite agrupar y visualizar todos los registros repetidos según diferentes criterios seleccionables:
+  1. Mismo `Apellido` y `Nombre` normalizado (insensible a acentos/mayúsculas).
+  2. Mismo `Celular` (normalizado solo a dígitos).
+  3. Mismo `Teléfono` fijo (normalizado solo a dígitos).
+  4. Mismo `Email` (insensible a mayúsculas).
+  5. Misma `Fecha de Nacimiento`.
 
 ---
 
