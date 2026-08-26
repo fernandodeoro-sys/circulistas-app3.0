@@ -42,4 +42,24 @@ class Evento extends Model
             ->withPivot('id', 'rol_id', 'grupo', 'observaciones')
             ->withTimestamps();
     }
+
+    public function getFotoEventoUrlAttribute()
+    {
+        if (!$this->foto_evento) return null;
+        if (str_starts_with($this->foto_evento, 'http://') || str_starts_with($this->foto_evento, 'https://')) {
+            return $this->foto_evento;
+        }
+        $disk = config('filesystems.default', 'public');
+        return \Illuminate\Support\Facades\Storage::disk($disk)->url($this->foto_evento);
+    }
+
+    public function getFotoCocinaUrlAttribute()
+    {
+        if (!$this->foto_cocina) return null;
+        if (str_starts_with($this->foto_cocina, 'http://') || str_starts_with($this->foto_cocina, 'https://')) {
+            return $this->foto_cocina;
+        }
+        $disk = config('filesystems.default', 'public');
+        return \Illuminate\Support\Facades\Storage::disk($disk)->url($this->foto_cocina);
+    }
 }

@@ -71,12 +71,14 @@ class EventoController extends Controller
 
         $validated['activo'] = $request->has('activo');
 
+        $disk = config('filesystems.default', 'public');
+
         if ($request->hasFile('foto_evento')) {
-            $validated['foto_evento'] = $request->file('foto_evento')->store('eventos', 'public');
+            $validated['foto_evento'] = $request->file('foto_evento')->store('eventos', $disk);
         }
 
         if ($request->hasFile('foto_cocina')) {
-            $validated['foto_cocina'] = $request->file('foto_cocina')->store('eventos', 'public');
+            $validated['foto_cocina'] = $request->file('foto_cocina')->store('eventos', $disk);
         }
 
         Evento::create($validated);
@@ -141,20 +143,22 @@ class EventoController extends Controller
 
         $validated['activo'] = $request->has('activo');
 
+        $disk = config('filesystems.default', 'public');
+
         if ($request->hasFile('foto_evento')) {
             // Eliminar archivo viejo si existe
             if ($evento->foto_evento) {
-                Storage::disk('public')->delete($evento->foto_evento);
+                Storage::disk($disk)->delete($evento->foto_evento);
             }
-            $validated['foto_evento'] = $request->file('foto_evento')->store('eventos', 'public');
+            $validated['foto_evento'] = $request->file('foto_evento')->store('eventos', $disk);
         }
 
         if ($request->hasFile('foto_cocina')) {
             // Eliminar archivo viejo si existe
             if ($evento->foto_cocina) {
-                Storage::disk('public')->delete($evento->foto_cocina);
+                Storage::disk($disk)->delete($evento->foto_cocina);
             }
-            $validated['foto_cocina'] = $request->file('foto_cocina')->store('eventos', 'public');
+            $validated['foto_cocina'] = $request->file('foto_cocina')->store('eventos', $disk);
         }
 
         $evento->update($validated);
@@ -170,12 +174,14 @@ class EventoController extends Controller
     {
         $evento = Evento::findOrFail($id);
 
+        $disk = config('filesystems.default', 'public');
+
         // Eliminar archivos físicos si existen
         if ($evento->foto_evento) {
-            Storage::disk('public')->delete($evento->foto_evento);
+            Storage::disk($disk)->delete($evento->foto_evento);
         }
         if ($evento->foto_cocina) {
-            Storage::disk('public')->delete($evento->foto_cocina);
+            Storage::disk($disk)->delete($evento->foto_cocina);
         }
 
         $evento->delete();

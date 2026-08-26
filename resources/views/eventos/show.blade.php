@@ -130,8 +130,8 @@
                 <h4 class="text-sm font-bold text-slate-900">Foto del Evento (Retiro)</h4>
                 @if($evento->foto_evento)
                     <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-50 shadow-sm transition hover:shadow-md">
-                        <a href="{{ asset('storage/' . $evento->foto_evento) }}" target="_blank">
-                            <img src="{{ asset('storage/' . $evento->foto_evento) }}" alt="Foto del Evento" class="object-cover w-full h-full">
+                        <a href="{{ $evento->foto_evento_url }}" target="_blank">
+                            <img src="{{ $evento->foto_evento_url }}" alt="Foto del Evento" class="object-cover w-full h-full">
                         </a>
                     </div>
                 @else
@@ -149,8 +149,8 @@
                 <h4 class="text-sm font-bold text-slate-900">Foto de Cocina / Servidores</h4>
                 @if($evento->foto_cocina)
                     <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-50 shadow-sm transition hover:shadow-md">
-                        <a href="{{ asset('storage/' . $evento->foto_cocina) }}" target="_blank">
-                            <img src="{{ asset('storage/' . $evento->foto_cocina) }}" alt="Foto de la Cocina" class="object-cover w-full h-full">
+                        <a href="{{ $evento->foto_cocina_url }}" target="_blank">
+                            <img src="{{ $evento->foto_cocina_url }}" alt="Foto de la Cocina" class="object-cover w-full h-full">
                         </a>
                     </div>
                 @else

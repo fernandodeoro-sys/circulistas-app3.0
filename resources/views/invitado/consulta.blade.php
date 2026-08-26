@@ -215,8 +215,8 @@
                             </div>
                             @if($evento->foto_evento)
                                 <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-50 shadow-sm transition hover:shadow-md">
-                                    <a href="{{ asset('storage/' . $evento->foto_evento) }}" target="_blank">
-                                        <img src="{{ asset('storage/' . $evento->foto_evento) }}" alt="Foto del Evento" class="object-cover w-full h-full">
+                                    <a href="{{ $evento->foto_evento_url }}" target="_blank">
+                                        <img src="{{ $evento->foto_evento_url }}" alt="Foto del Evento" class="object-cover w-full h-full">
                                     </a>
                                 </div>
                             @else
@@ -255,8 +255,8 @@
                                 <!-- Retiro No-Eslabón -->
                                 @if($evento->foto_cocina)
                                     <div class="relative rounded-xl overflow-hidden border border-slate-200 aspect-video bg-slate-50 shadow-sm transition hover:shadow-md">
-                                        <a href="{{ asset('storage/' . $evento->foto_cocina) }}" target="_blank">
-                                            <img src="{{ asset('storage/' . $evento->foto_cocina) }}" alt="Foto de Cocina" class="object-cover w-full h-full">
+                                        <a href="{{ $evento->foto_cocina_url }}" target="_blank">
+                                            <img src="{{ $evento->foto_cocina_url }}" alt="Foto de Cocina" class="object-cover w-full h-full">
                                         </a>
                                     </div>
                                 @else

@@ -132,7 +132,7 @@
                     <label for="foto_evento" class="block text-sm font-semibold text-slate-700">Foto del Evento (Grupal)</label>
                     @if($evento->foto_evento)
                         <div class="mt-2 mb-3 relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
-                            <img src="{{ asset('storage/' . $evento->foto_evento) }}" alt="Foto del Evento" class="object-cover w-full h-full">
+                            <img src="{{ $evento->foto_evento_url }}" alt="Foto del Evento" class="object-cover w-full h-full">
                         </div>
                     @endif
                     <input type="file" name="foto_evento" id="foto_evento" accept="image/*"
@@ -147,7 +147,7 @@
                     <label for="foto_cocina" class="block text-sm font-semibold text-slate-700">Foto de la Cocina / Servidores</label>
                     @if($evento->foto_cocina)
                         <div class="mt-2 mb-3 relative rounded-xl overflow-hidden border border-slate-200 bg-slate-50 aspect-video">
-                            <img src="{{ asset('storage/' . $evento->foto_cocina) }}" alt="Foto de la Cocina" class="object-cover w-full h-full">
+                            <img src="{{ $evento->foto_cocina_url }}" alt="Foto de la Cocina" class="object-cover w-full h-full">
                         </div>
                     @endif
                     <input type="file" name="foto_cocina" id="foto_cocina" accept="image/*"
