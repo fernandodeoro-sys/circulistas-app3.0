@@ -260,11 +260,16 @@
                                         </a>
                                     </div>
                                 @else
-                                    <div class="flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-xl aspect-video text-slate-400 bg-slate-50">
-                                        <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                    <div class="flex flex-col items-center justify-center border border-dashed border-slate-200 rounded-xl aspect-video text-slate-400 bg-slate-50 p-4 text-center">
+                                        <svg class="h-9 w-9 text-slate-300 mb-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                             <path stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                        <span class="text-xs font-semibold mt-2">Sin foto de cocina disponible</span>
+                                        <span class="text-xs font-semibold text-slate-500">Sin foto de cocina disponible</span>
+                                        <a href="mailto:mcjsanjuanjdd@gmail.com?subject=Aporte%20de%20Foto%20de%20Cocina%20-%20{{ urlencode($evento->nombre_completo) }}&body=Hola%20MCJ%20San%20Juan,%0A%0AAdjunto%20la%20foto%20de%20cocina%20correspondiente%20al%20{{ urlencode($evento->nombre_completo) }}.%0A%0AGracias!" 
+                                           class="mt-2 inline-flex items-center gap-1 text-[11px] font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                                            <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                                            ¿La tienes? ¡Envíala por correo!
+                                        </a>
                                     </div>
                                 @endif
 
@@ -295,16 +300,68 @@
                     <p class="text-xs font-semibold text-rose-700 max-w-md mx-auto">
                         No existe ningún retiro registrado con el tipo seleccionado y el número #{{ $numeroEvento }}. Por favor verifica el número e inténtalo nuevamente.
                     </p>
+                    <div class="pt-2">
+                        <a href="mailto:mcjsanjuanjdd@gmail.com?subject=Consulta%20o%20Aporte%20de%20Evento%20No%20Encontrado&body=Hola%20MCJ%20San%20Juan,%0A%0AEstaba%20buscando%20el%20evento%20{{ urlencode($tipoEvento) }}%20%23{{ $numeroEvento }}%20y%20no%20lo%20encontré.%0A%0APuedo%20aportar%20la%20siguiente%20información:"
+                           class="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-4 py-2 text-xs font-bold text-white shadow hover:bg-rose-700 transition">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                            Reportar o Aportar datos de esta Jornada
+                        </a>
+                    </div>
                 </div>
             @endif
         @endif
+
+        <!-- Banner Banner de Colaboración / Aporte por Correo Electrónico -->
+        <div class="mt-12 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+            <!-- SVG Decorativo de fondo -->
+            <div class="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
+                <svg class="h-64 w-64 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M1.5 8.67v8.58a3 3 0 003 3h15a3 3 0 003-3V8.67l-8.928 5.493a3 3 0 01-3.144 0L1.5 8.67z" />
+                    <path d="M22.5 6.908V6.75a3 3 0 00-3-3h-15a3 3 0 00-3 3v.158l9.714 5.978a1.5 1.5 0 001.572 0L22.5 6.908z" />
+                </svg>
+            </div>
+
+            <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="space-y-2 text-center md:text-left max-w-xl">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-bold text-indigo-200 border border-indigo-400/30">
+                        <svg class="h-4 w-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                        <span>Colabora con la memoria de MCJ San Juan</span>
+                    </div>
+                    <h3 class="text-xl sm:text-2xl font-bold text-white tracking-tight">¿Tienes fotos, circulares o datos para sumar al Padrón?</h3>
+                    <p class="text-xs sm:text-sm text-indigo-100 font-normal leading-relaxed">
+                        Si buscas una circular, foto de retiro o información de alguna jornada que aún no esté disponible, puedes enviárnosla directamente al correo oficial de <strong>MCJ San Juan</strong>.
+                    </p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center gap-3 shrink-0">
+                    <a href="mailto:mcjsanjuanjdd@gmail.com?subject=Aporte%20de%20Informaci%C3%B3n%20/%20Foto%20-%20Padr%C3%B3n%20MCJ&body=Hola%20MCJ%20San%20Juan,%0A%0AQuiero%20aportar%20la%20siguiente%20informaci%C3%B3n/foto/circular:%0A%0A-%20Evento/Jornada:%0A-%20Detalles:%0A%0A¡Muchas%20gracias!" 
+                       class="inline-flex items-center justify-center gap-2.5 rounded-2xl bg-amber-400 hover:bg-amber-300 px-5 py-3 text-xs sm:text-sm font-bold text-slate-900 shadow-lg transition transform hover:-translate-y-0.5">
+                        <svg class="h-5 w-5 text-slate-900" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        </svg>
+                        Enviar Aporte por Email
+                    </a>
+
+                    <button onclick="navigator.clipboard.writeText('mcjsanjuanjdd@gmail.com'); alert('¡Correo mcjsanjuanjdd@gmail.com copiado al portapapeles!');"
+                            class="inline-flex items-center justify-center gap-2 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 px-4 py-3 text-xs sm:text-sm font-semibold text-white transition backdrop-blur-md cursor-pointer"
+                            title="Copiar dirección de correo">
+                        <svg class="h-4.5 w-4.5 text-indigo-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Copiar Correo
+                    </button>
+                </div>
+            </div>
+        </div>
 
     </main>
 
     <!-- Footer Minimalista -->
     <footer class="border-t border-slate-200 bg-white py-4 mt-auto">
         <div class="mx-auto max-w-7xl px-4 text-center text-xs text-slate-400 font-medium">
-            Padrón MCJ - Movimiento Círculos de Juventud © {{ date('Y') }}
+            Padrón MCJ - Movimiento Círculos de Juventud © {{ date('Y') }} • <a href="mailto:mcjsanjuanjdd@gmail.com" class="text-indigo-600 hover:underline">mcjsanjuanjdd@gmail.com</a>
         </div>
     </footer>
 

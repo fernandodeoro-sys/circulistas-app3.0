@@ -221,8 +221,18 @@
 
     <!-- Footer Moderno -->
     <footer class="mt-auto border-t border-slate-200/80 bg-white py-6">
-        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-400">
-            &copy; {{ date('Y') }} Movimiento de Círculos de Juventud (MCJ). Todos los derechos reservados.
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+            <div>
+                &copy; {{ date('Y') }} Movimiento de Círculos de Juventud (MCJ). Todos los derechos reservados.
+            </div>
+            <div class="flex items-center gap-1.5 font-medium">
+                <span>¿Falta información o fotos?</span>
+                <a href="mailto:mcjsanjuanjdd@gmail.com?subject=Aporte%20de%20Informaci%C3%B3n%20/%20Foto%20-%20Padr%C3%B3n%20MCJ&body=Hola%20MCJ%20San%20Juan,%0A%0AQuiero%20aportar%20la%20siguiente%20informaci%C3%B3n/foto/circular:%0A%0A-%20Evento/Jornada:%0A-%20Detalles:%0A%0A¡Muchas%20gracias!" 
+                   class="inline-flex items-center gap-1 font-bold text-indigo-600 hover:text-indigo-800 hover:underline">
+                    <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 012.828 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
+                    Aportar por correo (mcjsanjuanjdd@gmail.com)
+                </a>
+            </div>
         </div>
     </footer>
 
