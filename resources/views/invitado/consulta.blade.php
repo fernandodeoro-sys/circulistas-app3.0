@@ -88,8 +88,8 @@
                     </svg>
                     Consulta Pública de Retiros
                 </span>
-                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Buscar Retiro o Evento</h1>
-                <p class="mt-2 text-sm text-indigo-100 leading-relaxed">
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight !text-white">Buscar Retiro o Evento</h1>
+                <p class="mt-2 text-sm !text-slate-100 leading-relaxed font-medium">
                     Selecciona el tipo de retiro e ingresa el número correspondiente para consultar la información del evento, la fotografía grupal y la circular oficial.
                 </p>
             </div>
@@ -312,7 +312,7 @@
         @endif
 
         <!-- Banner Banner de Colaboración / Aporte por Correo Electrónico -->
-        <div class="mt-12 rounded-3xl border border-indigo-100 bg-gradient-to-br from-indigo-900 via-indigo-800 to-slate-900 p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+        <div class="mt-12 rounded-3xl border border-indigo-100/20 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 p-6 sm:p-8 !text-white shadow-xl relative overflow-hidden">
             <!-- SVG Decorativo de fondo -->
             <div class="absolute -right-6 -bottom-6 opacity-10 pointer-events-none">
                 <svg class="h-64 w-64 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -323,14 +323,14 @@
 
             <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
                 <div class="space-y-2 text-center md:text-left max-w-xl">
-                    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-bold text-indigo-200 border border-indigo-400/30">
-                        <svg class="h-4 w-4 text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <div class="inline-flex items-center gap-2 rounded-full bg-indigo-500/20 px-3 py-1 text-xs font-bold !text-indigo-200 border border-indigo-400/30">
+                        <svg class="h-4 w-4 !text-amber-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                         </svg>
                         <span>Colabora con la memoria de MCJ San Juan</span>
                     </div>
-                    <h3 class="text-xl sm:text-2xl font-bold text-white tracking-tight">¿Tienes fotos, circulares o datos para sumar al Padrón?</h3>
-                    <p class="text-xs sm:text-sm text-indigo-100 font-normal leading-relaxed">
+                    <h3 class="text-xl sm:text-2xl font-bold !text-white tracking-tight">¿Tienes fotos, circulares o datos para sumar al Padrón?</h3>
+                    <p class="text-xs sm:text-sm !text-slate-100 font-medium leading-relaxed">
                         Si buscas una circular, foto de retiro o información de alguna jornada que aún no esté disponible, puedes enviárnosla directamente al correo oficial de <strong>MCJ San Juan</strong>.
                     </p>
                 </div>

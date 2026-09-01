@@ -68,14 +68,82 @@ header span.text-slate-900 {
 }
 
 /* 4. Títulos y Textos de Párrafos */
-.text-slate-900, .text-slate-800, h1, h2, h3, h4, h5, h6 {
-    color: #0b162f !important;
+.text-slate-900, .text-slate-800 {
+    color: #0b162f;
 }
-.text-slate-700, .text-slate-600, .text-slate-500, p {
-    color: #1a2e56 !important; /* Azul intermedio para subtítulos */
+.text-slate-700, .text-slate-600, .text-slate-500 {
+    color: #1a2e56;
 }
 .text-slate-400 {
-    color: #2e4570 !important;
+    color: #2e4570;
+}
+
+/* Títulos y Párrafos generales por defecto (sin !important para permitir utilidades) */
+h1, h2, h3, h4, h5, h6 {
+    color: #0b162f;
+}
+p {
+    color: #1a2e56;
+}
+
+/* Garantizar legibilidad en textos claros y banners oscuros */
+.text-white {
+    color: #ffffff !important;
+}
+.text-indigo-50 {
+    color: #f0f3ff !important;
+}
+.text-indigo-100 {
+    color: #e0e7ff !important;
+}
+.text-indigo-200 {
+    color: #c7d2fe !important;
+}
+.text-amber-100 {
+    color: #fef9c3 !important;
+}
+.text-amber-200 {
+    color: #fef08a !important;
+}
+.text-amber-300 {
+    color: #fde047 !important;
+}
+.text-amber-400 {
+    color: #facc15 !important;
+}
+.text-emerald-600, .text-emerald-700 {
+    color: #047857 !important;
+}
+.text-rose-600, .text-rose-700 {
+    color: #be123c !important;
+}
+
+/* Reglas específicas para contenedores con fondo oscuro */
+.banner-header, 
+.bg-indigo-900, 
+.bg-indigo-950, 
+.bg-slate-900, 
+[class*="from-indigo-900"],
+[class*="from-slate-900"] {
+    color: #ffffff !important;
+}
+
+.banner-header p,
+.bg-indigo-900 p,
+.bg-indigo-950 p,
+.bg-slate-900 p,
+[class*="from-indigo-900"] p,
+[class*="from-slate-900"] p,
+.banner-header .text-indigo-100,
+.bg-gradient-to-br .text-indigo-100 {
+    color: #e0e7ff !important; /* Texto claro totalmente legible */
+}
+
+.banner-header h1, .banner-header h2, .banner-header h3,
+.bg-indigo-900 h1, .bg-indigo-900 h2, .bg-indigo-900 h3,
+.bg-slate-900 h1, .bg-slate-900 h2, .bg-slate-900 h3,
+[class*="from-indigo-900"] h1, [class*="from-indigo-900"] h2, [class*="from-indigo-900"] h3 {
+    color: #ffffff !important;
 }
 
 /* 5. Entradas de Texto, Selects y Formularios */
