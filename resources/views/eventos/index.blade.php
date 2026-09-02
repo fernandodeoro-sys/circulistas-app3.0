@@ -222,20 +222,18 @@
             @endforelse
             </tbody>
         </table>
-    </div>
-    
-        </div>
-        
-        <!-- Paginación -->
-        <div id="pagination-container">
-            @if($eventos->hasPages())
-                <div class="border-t border-slate-100 px-6 py-4 bg-slate-50/50">
-                    {{ $eventos->links() }}
-                </div>
-            @endif
+            <!-- Paginación -->
+            <div id="pagination-container">
+                @if($eventos->hasPages())
+                    <div class="border-t border-slate-100 px-6 py-4 bg-slate-50/50">
+                        {{ $eventos->links() }}
+                    </div>
+                @endif
+            </div>
         </div>
     </div>
 </div>
+
 
 <script>
     let debounceTimer;
@@ -259,9 +257,12 @@
 
     function loadResults(url) {
         const container = document.getElementById('live-search-container');
-        if (container) {
-            container.style.opacity = '0.5';
+        if (!container) {
+            window.location.href = url;
+            return;
         }
+
+        container.style.opacity = '0.5';
 
         fetch(url, {
             headers: {
@@ -282,6 +283,11 @@
             // Actualizar URL del navegador
             history.pushState(null, '', url);
             
+            // Quitar el foco del botón/enlace
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+
             // Mostrar/ocultar el botón limpiar
             const hasSearch = new URL(url).searchParams.has('search');
             const clearBtn = document.getElementById('clear-search-btn');
@@ -294,17 +300,20 @@
             if (container) {
                 container.style.opacity = '1';
             }
+            window.location.href = url;
         });
     }
 
     // Interceptar clics en los enlaces de paginación
     document.addEventListener('click', function (e) {
         const link = e.target.closest('#pagination-container a');
-        if (link) {
+        if (link && link.href) {
             e.preventDefault();
+            link.blur();
             loadResults(link.href);
         }
     });
+
 </script>
 
 @endsection

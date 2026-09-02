@@ -209,3 +209,30 @@ thead.bg-slate-50\/70 {
 tr.hover\:bg-slate-50\/50:hover {
     background-color: rgba(105, 151, 194, 0.4) !important;
 }
+
+/* 10. Estilos de Paginación y Página Activa */
+#pagination-container a, 
+nav[aria-label="Pagination Navigation"] a,
+nav[role="navigation"] a {
+    text-decoration: none !important;
+    outline: none !important;
+}
+
+#pagination-container a:focus, 
+nav[aria-label="Pagination Navigation"] a:focus,
+nav[role="navigation"] a:focus {
+    outline: none !important;
+}
+
+/* Estilo destacado de la página activa */
+nav[aria-label="Pagination Navigation"] [aria-current="page"] span,
+nav[role="navigation"] [aria-current="page"] span {
+    background-color: #0b162f !important;
+    color: #ffffff !important;
+    border-color: #0b162f !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -2px rgba(0, 0, 0, 0.1) !important;
+    outline: none !important;
+}
+
+

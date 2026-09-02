@@ -325,9 +325,12 @@
 
     function loadResults(url) {
         const container = document.getElementById('live-search-container');
-        if (container) {
-            container.style.opacity = '0.5';
+        if (!container) {
+            window.location.href = url;
+            return;
         }
+        
+        container.style.opacity = '0.5';
 
         fetch(url, {
             headers: {
@@ -348,6 +351,11 @@
             // Actualizar URL del navegador
             history.pushState(null, '', url);
             
+            // Quitar el foco del botón/enlace
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
+            
             // Mostrar/ocultar el botón limpiar
             const hasSearch = new URL(url).searchParams.has('search');
             const clearBtn = document.getElementById('clear-search-btn');
@@ -360,17 +368,20 @@
             if (container) {
                 container.style.opacity = '1';
             }
+            window.location.href = url;
         });
     }
 
     // Interceptar clics en los enlaces de paginación
     document.addEventListener('click', function (e) {
         const link = e.target.closest('#pagination-container a');
-        if (link) {
+        if (link && link.href) {
             e.preventDefault();
+            link.blur();
             loadResults(link.href);
         }
     });
+
 
     function getTableData() {
         const table = document.querySelector('#live-search-container table');
