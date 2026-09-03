@@ -11,8 +11,8 @@
     
     <div class="flex flex-wrap items-center gap-3">
         <!-- Contador de Registros -->
-        <span class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-600/10">
-            Total: {{ $eventos->total() }} eventos
+        <span id="header-total-badge" class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-600/10">
+            Total: {{ $eventos->total() }} eventos{{ $tipoEventoSeleccionado ? ' de ' . $tipoEventoSeleccionado->nombre : '' }}
         </span>
         
         @if(in_array(Auth::user()->role, ['administrador', 'supervisor']))
@@ -39,9 +39,44 @@
 
 <!-- Listado en Tarjeta Premium -->
 <div class="overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+    <!-- Pestañas de Filtro por Tipo de Evento (Selector rápido por Eslabón, Enganche, etc.) -->
+    <div class="border-b border-slate-200/80 bg-slate-50/50 px-4 py-3">
+        <div class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+            </svg>
+            <span>Filtrar por Tipo de Retiro / Evento:</span>
+        </div>
+        <div id="tipo-evento-tabs" class="flex flex-wrap items-center gap-1.5">
+            <!-- Opción Todos -->
+            <button type="button" 
+                    onclick="filterByTipoEvento('')"
+                    class="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition cursor-pointer {{ !request('tipo_evento_id') ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-600/30' : 'bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs' }}">
+                <span>Todos los eventos</span>
+                <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-extrabold rounded-md {{ !request('tipo_evento_id') ? 'bg-slate-900/40 text-white' : 'bg-slate-100 text-slate-700' }}">
+                    {{ $totalEventos }}
+                </span>
+            </button>
+
+            @foreach($tiposEvento as $tipo)
+                <button type="button" 
+                        onclick="filterByTipoEvento('{{ $tipo->id }}')"
+                        class="inline-flex items-center gap-2 rounded-xl px-3.5 py-2 text-xs font-bold transition cursor-pointer {{ request('tipo_evento_id') == $tipo->id ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-indigo-600/30' : 'bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900 border border-slate-200/80 shadow-xs' }}">
+                    <span>{{ $tipo->nombre }}</span>
+                    <span class="inline-flex items-center justify-center px-2 py-0.5 text-[10px] font-extrabold rounded-md {{ request('tipo_evento_id') == $tipo->id ? 'bg-slate-900/40 text-white' : 'bg-slate-100 text-slate-700' }}">
+                        {{ $tipo->eventos_count }}
+                    </span>
+                </button>
+            @endforeach
+        </div>
+    </div>
+
     <!-- Filtros y Búsqueda -->
     <div class="border-b border-slate-200/80 bg-slate-50/50 p-4">
         <form action="{{ route('eventos.index') }}" method="GET" onsubmit="event.preventDefault();" class="flex flex-col sm:flex-row gap-3">
+            @if(request('tipo_evento_id'))
+                <input type="hidden" name="tipo_evento_id" id="tipo_evento_id_input" value="{{ request('tipo_evento_id') }}">
+            @endif
             <!-- Input de Búsqueda -->
             <div class="relative flex-1">
                 <span class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-slate-400">
@@ -54,7 +89,7 @@
                        id="live-search-input"
                        value="{{ request('search') }}"
                        oninput="handleLiveSearch()"
-                       placeholder="Buscar evento por tipo, lugar, número u observaciones..." 
+                       placeholder="{{ $tipoEventoSeleccionado ? 'Buscar en ' . $tipoEventoSeleccionado->nombre . ' por número, lugar u observaciones...' : 'Buscar en todos los eventos por tipo, lugar, número u observaciones...' }}" 
                        class="w-full rounded-xl border border-slate-200 bg-white pl-10 pr-4 py-2 text-sm text-slate-900 placeholder-slate-400 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none shadow-sm">
             </div>
             
@@ -64,7 +99,7 @@
                         class="inline-flex items-center justify-center rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus:outline-none cursor-pointer">
                     Buscar
                 </button>
-                <a href="{{ route('eventos.index') }}" 
+                <a href="{{ request('tipo_evento_id') ? route('eventos.index', ['tipo_evento_id' => request('tipo_evento_id')]) : route('eventos.index') }}" 
                    id="clear-search-btn"
                    style="{{ request('search') ? 'display: inline-flex;' : 'display: none;' }}"
                    class="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none">
@@ -73,6 +108,7 @@
             </div>
         </form>
     </div>
+
 
     <!-- Contenedor dinámico de búsqueda en tiempo real -->
     <div id="live-search-container" class="transition-opacity duration-200">
@@ -214,8 +250,24 @@
                             <svg class="h-10 w-10 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
-                            <span class="text-sm font-semibold text-slate-500">No se encontraron eventos</span>
-                            <span class="text-xs text-slate-400">Comienza registrando un retiro o jornada con el botón superior.</span>
+                            <span class="text-sm font-semibold text-slate-500">
+                                @if(request('search') && $tipoEventoSeleccionado)
+                                    No se encontraron eventos de {{ $tipoEventoSeleccionado->nombre }} que coincidan con "{{ request('search') }}"
+                                @elseif(request('search'))
+                                    No se encontraron eventos que coincidan con "{{ request('search') }}"
+                                @elseif($tipoEventoSeleccionado)
+                                    No hay eventos registrados en {{ $tipoEventoSeleccionado->nombre }}
+                                @else
+                                    No se encontraron eventos
+                                @endif
+                            </span>
+                            @if(request('search') || request('tipo_evento_id'))
+                                <button type="button" onclick="filterByTipoEvento('')" class="mt-2 text-xs font-semibold text-indigo-700 hover:underline cursor-pointer">
+                                    Ver todos los eventos sin filtros
+                                </button>
+                            @else
+                                <span class="text-xs text-slate-400">Comienza registrando un retiro o jornada con el botón superior.</span>
+                            @endif
                         </div>
                     </td>
                 </tr>
@@ -238,15 +290,26 @@
 <script>
     let debounceTimer;
 
+    function filterByTipoEvento(tipoId) {
+        const url = new URL(window.location.href);
+        if (tipoId) {
+            url.searchParams.set('tipo_evento_id', tipoId);
+        } else {
+            url.searchParams.delete('tipo_evento_id');
+        }
+        url.searchParams.delete('page'); // Reiniciar a página 1 al cambiar de filtro
+        loadResults(url.toString());
+    }
+
     function handleLiveSearch() {
         clearTimeout(debounceTimer);
         const query = document.getElementById('live-search-input').value;
         
         debounceTimer = setTimeout(() => {
             const url = new URL(window.location.href);
-            url.searchParams.set('search', query);
-            
-            if (!query) {
+            if (query) {
+                url.searchParams.set('search', query);
+            } else {
                 url.searchParams.delete('search');
             }
             url.searchParams.delete('page'); // Reiniciar a página 1 al buscar
@@ -279,6 +342,20 @@
                 container.innerHTML = newContainer.innerHTML;
                 container.style.opacity = '1';
             }
+
+            // Actualizar pestañas de tipo de evento
+            const newTabs = doc.getElementById('tipo-evento-tabs');
+            const currentTabs = document.getElementById('tipo-evento-tabs');
+            if (newTabs && currentTabs) {
+                currentTabs.innerHTML = newTabs.innerHTML;
+            }
+
+            // Actualizar contador del encabezado
+            const newBadge = doc.getElementById('header-total-badge');
+            const currentBadge = document.getElementById('header-total-badge');
+            if (newBadge && currentBadge) {
+                currentBadge.innerHTML = newBadge.innerHTML;
+            }
             
             // Actualizar URL del navegador
             history.pushState(null, '', url);
@@ -288,11 +365,20 @@
                 document.activeElement.blur();
             }
 
+            // Actualizar placeholder del buscador
+            const newSearchInput = doc.getElementById('live-search-input');
+            const currentSearchInput = document.getElementById('live-search-input');
+            if (newSearchInput && currentSearchInput) {
+                currentSearchInput.placeholder = newSearchInput.placeholder;
+            }
+
             // Mostrar/ocultar el botón limpiar
             const hasSearch = new URL(url).searchParams.has('search');
             const clearBtn = document.getElementById('clear-search-btn');
             if (clearBtn) {
                 clearBtn.style.display = hasSearch ? 'inline-flex' : 'none';
+                const hasTipo = new URL(url).searchParams.get('tipo_evento_id');
+                clearBtn.href = hasTipo ? '{{ route("eventos.index") }}?tipo_evento_id=' + hasTipo : '{{ route("eventos.index") }}';
             }
         })
         .catch(error => {
@@ -304,7 +390,7 @@
         });
     }
 
-    // Interceptar clics en los enlaces de paginación
+    // Interceptar clics en los enlaces de paginación y limpiar
     document.addEventListener('click', function (e) {
         const link = e.target.closest('#pagination-container a');
         if (link && link.href) {
@@ -312,8 +398,24 @@
             link.blur();
             loadResults(link.href);
         }
+
+        const clearBtn = e.target.closest('#clear-search-btn');
+        if (clearBtn) {
+            e.preventDefault();
+            const searchInput = document.getElementById('live-search-input');
+            if (searchInput) searchInput.value = '';
+            const url = new URL(window.location.href);
+            url.searchParams.delete('search');
+            url.searchParams.delete('page');
+            loadResults(url.toString());
+        }
     });
 
+    // Soporte para botones adelante/atrás del navegador
+    window.addEventListener('popstate', function() {
+        loadResults(window.location.href);
+    });
 </script>
 
 @endsection
+

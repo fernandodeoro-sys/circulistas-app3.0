@@ -18,6 +18,16 @@ class EventoController extends Controller
     {
         $query = Evento::with('tipoEvento');
 
+        $tiposEvento = TipoEvento::withCount('eventos')->orderBy('nombre')->get();
+        $totalEventos = Evento::count();
+
+        $tipoEventoSeleccionado = null;
+        if ($request->filled('tipo_evento_id')) {
+            $tipoEventoId = $request->input('tipo_evento_id');
+            $query->where('tipo_evento_id', $tipoEventoId);
+            $tipoEventoSeleccionado = $tiposEvento->firstWhere('id', $tipoEventoId);
+        }
+
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->where(function ($q) use ($search) {
@@ -34,8 +44,9 @@ class EventoController extends Controller
             ->paginate(20)
             ->withQueryString();
 
-        return view('eventos.index', compact('eventos'));
+        return view('eventos.index', compact('eventos', 'tiposEvento', 'totalEventos', 'tipoEventoSeleccionado'));
     }
+
 
     /**
      * Show the form for creating a new resource.
