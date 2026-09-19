@@ -1068,7 +1068,20 @@
             ocultarCarga();
 
             if (result.success) {
-                alert(`¡Importación Completa!\n\n- Evento: ${result.summary.evento}\n- Circulistas Nuevos: ${result.summary.circulistas_nuevos}\n- Circulistas Existentes: ${result.summary.circulistas_existentes}\n- Participaciones: ${result.summary.participaciones}`);
+                let message = `¡Importación Completa!\n\n` +
+                              `- Evento: ${result.summary.evento}\n` +
+                              `- Circulistas Nuevos: ${result.summary.circulistas_nuevos}\n` +
+                              `- Circulistas Existentes: ${result.summary.circulistas_existentes}\n` +
+                              `- Participaciones Creadas: ${result.summary.participaciones}`;
+
+                if (result.summary.omitidos && result.summary.omitidos.length > 0) {
+                    message += `\n\n⚠️ REGISTROS OMITIDOS / DUPLICADOS (${result.summary.omitidos.length}):\n`;
+                    result.summary.omitidos.forEach(item => {
+                        message += `• ${item}\n`;
+                    });
+                }
+
+                alert(message);
                 window.location.href = "{{ route('eventos.index') }}";
             } else {
                 alert('Error al realizar la importación:\n' + result.message);

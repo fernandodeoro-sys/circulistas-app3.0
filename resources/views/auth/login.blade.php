@@ -69,7 +69,7 @@
         @endif
     </div>
 
-    <div class="w-full max-w-[420px] my-auto z-10 animate-[fadeIn_0.5s_ease-out]">
+    <div class="w-full max-w-md mx-auto my-auto z-10 animate-[fadeIn_0.5s_ease-out]" style="max-width: 420px; width: 100%; margin-left: auto; margin-right: auto;">
         <!-- Card Contenedor con distribución más compacta y elegante -->
         <div class="rounded-3xl border border-slate-200/80 bg-white/90 backdrop-blur-xl px-6 sm:px-8 py-6 sm:py-7 shadow-[0_8px_30px_rgb(0,0,0,0.03)] ring-1 ring-slate-100/50">
             
@@ -113,10 +113,10 @@
             @endif
 
             <!-- Formulario -->
-            <form action="{{ route('login') }}" method="POST" class="space-y-3.5 sm:space-y-4">
+            <form action="{{ route('login') }}" method="POST" autocomplete="off" class="space-y-3.5 sm:space-y-4">
                 @csrf
 
-                <!-- Email -->
+                <!-- Email / Usuario -->
                 <div>
                     <label for="email" class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1 pl-1">Correo Electrónico</label>
                     <div class="relative rounded-2xl shadow-sm">
@@ -125,7 +125,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.206" />
                             </svg>
                         </div>
-                        <input type="email" name="email" id="email" value="{{ old('email') }}" required autofocus
+                        <input type="email" name="email" id="email" value="{{ old('email', '') }}" required autofocus autocomplete="off"
                                class="block w-full rounded-2xl bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none input-premium"
                                placeholder="ejemplo@mcj.org">
                     </div>
@@ -140,7 +140,7 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                             </svg>
                         </div>
-                        <input type="password" name="password" id="password" required
+                        <input type="password" name="password" id="password" required autocomplete="new-password" value=""
                                class="block w-full rounded-2xl bg-slate-50/50 py-2.5 pl-11 pr-4 text-sm text-slate-800 placeholder-slate-400 outline-none input-premium"
                                placeholder="••••••••">
                     </div>

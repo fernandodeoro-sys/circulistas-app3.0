@@ -397,6 +397,7 @@ class EventoController extends Controller
                 ->keyBy('circulista_id');
 
             $participacionesToCreate = [];
+            $omitidos = [];
             
             // Llevar registro de circulistas actualizados para no repetir la query de update
             $updatedCirculistas = [];
@@ -497,13 +498,19 @@ class EventoController extends Controller
                 $participacionExistente = $existingParticipaciones->get($circulista->id);
 
                 if ($participacionExistente) {
-                    // Si ya existe, actualizamos su rol y grupo si son distintos
-                    $grupoVal = !empty($p['grupo']) ? trim($p['grupo']) : null;
-                    if ($participacionExistente->rol_id !== (int)$p['rol_id'] || $participacionExistente->grupo !== $grupoVal) {
-                        $participacionExistente->update([
-                            'rol_id' => $p['rol_id'],
-                            'grupo' => $grupoVal
-                        ]);
+                    // Si ya existe en la DB previa, actualizamos su rol y grupo si son distintos
+                    if ($participacionExistente instanceof \App\Models\Participacion) {
+                        $grupoVal = !empty($p['grupo']) ? trim($p['grupo']) : null;
+                        if ($participacionExistente->rol_id !== (int)$p['rol_id'] || $participacionExistente->grupo !== $grupoVal) {
+                            $participacionExistente->update([
+                                'rol_id' => $p['rol_id'],
+                                'grupo' => $grupoVal
+                            ]);
+                        } else {
+                            $omitidos[] = $circulista->apellido . ', ' . $circulista->nombre . ' (Ya registrado previamente en este evento)';
+                        }
+                    } else {
+                        $omitidos[] = $circulista->apellido . ', ' . $circulista->nombre . ' (Fila duplicada en la lista importada)';
                     }
                 } else {
                     $participacionesToCreate[] = [
@@ -515,6 +522,8 @@ class EventoController extends Controller
                         'updated_at' => now()->toDateTimeString()
                     ];
                     $participacionesCreadasCount++;
+                    // Registrar en memoria para que si la persona vuelve a aparecer repetida en la misma lista del Excel, no se intente insertar dos veces
+                    $existingParticipaciones->put($circulista->id, true);
                 }
             }
 
@@ -533,7 +542,8 @@ class EventoController extends Controller
                     'evento_id' => $eventoId,
                     'circulistas_nuevos' => $personasCreadasCount,
                     'circulistas_existentes' => $personasAsociadasCount,
-                    'participaciones' => $participacionesCreadasCount
+                    'participaciones' => $participacionesCreadasCount,
+                    'omitidos' => $omitidos
                 ]
             ]);
 
