@@ -283,64 +283,125 @@
     function parsearExcel(file) {
         const reader = new FileReader();
         reader.onload = function(e) {
-            const data = new Uint8Array(e.target.result);
-            const workbook = XLSX.read(data, {type: 'array'});
-            
-            // Tomamos la primera hoja del libro
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            
-            // Convertimos la hoja a un formato de array bidimensional (filas y columnas crudas)
-            const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ''});
-            
-            const registros = parsearRegistros2D(rows);
-            procesarRegistrosImportados(registros);
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array', cellDates: true});
+                
+                // Tomamos la primera hoja del libro
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                
+                // Convertimos la hoja a un formato de array bidimensional (filas y columnas crudas)
+                const rows = XLSX.utils.sheet_to_json(sheet, {header: 1, defval: ''});
+                
+                const registros = parsearRegistros2D(rows);
+                procesarRegistrosImportados(registros);
+            } catch (err) {
+                console.error('Error procesando Excel:', err);
+                alert('Ocurrió un problema al leer el archivo Excel. Verifica que el archivo no esté protegido ni corrupto.');
+                ocultarCarga();
+            }
         };
         reader.readAsArrayBuffer(file);
     }
 
-    // Analiza las filas bidimensionales de Excel buscando dinámicamente las cabeceras
+    // Separa cadenas de Nombre y Apellido respetando si vienen con coma ("Apellido, Nombre") o sin coma ("Nombre Apellido")
+    function splitNombreYApellido(str) {
+        let strClean = String(str || '').trim();
+        if (!strClean) return { nombre: '', apellido: '' };
+
+        const commaIndex = strClean.indexOf(',');
+        if (commaIndex !== -1) {
+            // Formato con coma: "Bermúdez, Agustín" -> Apellido primero, Nombre después
+            const apellido = strClean.substring(0, commaIndex).trim();
+            const nombre = strClean.substring(commaIndex + 1).trim();
+            return { nombre, apellido };
+        }
+
+        // Formato sin coma: "Agustín Bermúdez" -> Nombre primero, Apellido después
+        const words = strClean.split(/\s+/);
+        if (words.length === 1) {
+            return { nombre: words[0], apellido: '' };
+        } else if (words.length === 2) {
+            return { nombre: words[0], apellido: words[1] };
+        } else {
+            // Si hay 3 o más palabras (ej. "María Alejandra Gómez" o "Juan Carlos De la Cruz")
+            const lowerWords = words.map(w => w.toLowerCase());
+            let apellidoStartIdx = words.length - 1;
+            
+            if (words.length >= 3 && ['de', 'del', 'la', 'las', 'los'].includes(lowerWords[words.length - 2])) {
+                apellidoStartIdx = words.length - 2;
+                if (words.length >= 4 && ['de', 'del'].includes(lowerWords[words.length - 3])) {
+                    apellidoStartIdx = words.length - 3;
+                }
+            } else if (words.length === 3) {
+                // Ej: "María Alejandra Gómez" -> Nombre: "María Alejandra", Apellido: "Gómez"
+                apellidoStartIdx = 2;
+            }
+            
+            const nombre = words.slice(0, apellidoStartIdx).join(' ');
+            const apellido = words.slice(apellidoStartIdx).join(' ');
+            return { nombre, apellido };
+        }
+    }
+
+    // Analiza las filas bidimensionales de Excel buscando dinámicamente las cabeceras y mapeando datos
     function parsearRegistros2D(rows) {
-        // 1. Encontrar la fila que contiene las cabeceras reales
-        let headerRowIndex = -1;
-        const keywords = [
-            'apellido', 'nombre', 'celular', 'email', 'correo', 
-            'f. nac', 'f.nac', 'fecha nac', 'fecha de nacimiento', 'nacimiento', 'fec. nac', 'fec.nac', 'fecha', 'nac',
-            'domicilio', 'direccion', 'dirección', 'calle', 'address',
-            'localidad', 'grupo', 'patrulla', 'rol', 'función', 'funcion', 
-            'telefono', 'teléfono', 'tel', 'cel', 'phone', 'mail', 'contacto'
+        if (!rows || !Array.isArray(rows) || rows.length === 0) return [];
+
+        function normalizeStr(str) {
+            return String(str || '')
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9]/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+        }
+
+        const nameKeywords = ['apellido', 'nombre', 'circulista', 'participante', 'integrante', 'socio', 'persona', 'alumno', 'miembro'];
+        const otherKeywords = [
+            'f nac', 'fnac', 'fecha nac', 'fecha nacimiento', 'nacimiento', 'fec nac', 'fecnac', 'fecha', 'nac',
+            'celular', 'telefono', 'tel', 'cel', 'phone', 'movil', 'contacto', 'whatsapp',
+            'email', 'correo', 'mail',
+            'domicilio', 'direccion', 'calle', 'address',
+            'localidad', 'ciudad', 'barrio', 'municipio',
+            'provincia', 'estado',
+            'rol', 'role', 'funcion', 'puesto', 'tarea',
+            'grupo', 'patrulla', 'equipo', 'cuadrilla'
         ];
         
-        for (let i = 0; i < rows.length; i++) {
+        let bestHeaderRowIndex = -1;
+        let maxMatches = 0;
+
+        for (let i = 0; i < Math.min(rows.length, 15); i++) {
             const row = rows[i];
             if (!Array.isArray(row)) continue;
             
             let matchCount = 0;
-            for (let j = 0; j < row.length; j++) {
-                const cellVal = String(row[j] || '').toLowerCase().trim();
-                if (keywords.some(kw => cellVal === kw || cellVal.includes(kw))) {
+            let hasNameKw = false;
+            
+            row.forEach(cell => {
+                const normCell = normalizeStr(cell);
+                if (!normCell) return;
+                
+                if (nameKeywords.some(kw => normCell.includes(kw))) {
+                    hasNameKw = true;
+                    matchCount += 2;
+                }
+                if (otherKeywords.some(kw => normCell.includes(kw))) {
                     matchCount++;
                 }
-            }
+            });
             
-            const rowText = row.join(' ').toLowerCase();
-            const hasNameHeader = rowText.includes('nombre') || rowText.includes('apellido') || rowText.includes('circulista') || rowText.includes('participante');
-            const hasMultipleCells = row.filter(c => String(c || '').trim().length > 0).length >= 3;
-            
-            if (matchCount >= 1 && hasNameHeader && hasMultipleCells) {
-                headerRowIndex = i;
-                break;
+            if (hasNameKw && matchCount > maxMatches) {
+                maxMatches = matchCount;
+                bestHeaderRowIndex = i;
             }
         }
+
+        let headerRowIndex = bestHeaderRowIndex;
+        let headers = headerRowIndex !== -1 ? rows[headerRowIndex] : [];
         
-        // Si no se detectó cabecera, asumimos que empieza en la fila 0
-        if (headerRowIndex === -1) {
-            headerRowIndex = 0;
-        }
-        
-        const headers = rows[headerRowIndex] || [];
-        
-        // 2. Mapear los índices de las columnas correspondientes de forma unívoca
         const indices = {
             apellido_y_nombre: -1,
             apellido: -1,
@@ -354,87 +415,108 @@
             rol: -1,
             grupo: -1
         };
-        
-        headers.forEach((h, idx) => {
-            const hStr = String(h || '').toLowerCase().trim();
-            if (!hStr) return;
-            
-            if (hStr.includes('apellido') && hStr.includes('nombre')) {
-                indices.apellido_y_nombre = idx;
-            } else if (hStr.includes('apellido') || hStr.includes('apellidos') || hStr === 'last name' || hStr === 'surname') {
-                indices.apellido = idx;
-            } else if (hStr.includes('nombre') || hStr.includes('nombres') || hStr === 'first name' || hStr === 'name') {
-                indices.nombre = idx;
-            } else if (hStr.includes('nac') || hStr.includes('birth') || (hStr.includes('fecha') && !hStr.includes('inicio') && !hStr.includes('fin') && !hStr.includes('creacion') && !hStr.includes('registro'))) {
-                indices.fecha_nacimiento = idx;
-            } else if (hStr.includes('cel') || hStr.includes('tel') || hStr.includes('phone') || hStr.includes('contacto')) {
-                indices.celular = idx;
-            } else if (hStr.includes('mail') || hStr.includes('email') || hStr.includes('correo')) {
-                indices.email = idx;
-            } else if (hStr.includes('domicilio') || hStr.includes('direccion') || hStr.includes('dirección') || hStr === 'calle' || hStr === 'address') {
-                indices.domicilio = idx;
-            } else if (hStr.includes('localidad') || hStr.includes('ciudad') || hStr.includes('barrio')) {
-                indices.localidad = idx;
-            } else if (hStr.includes('provincia') || hStr.includes('estado')) {
-                indices.provincia = idx;
-            } else if (hStr === 'rol' || hStr === 'role' || hStr.includes('funcion') || hStr.includes('función') || hStr.includes('puesto')) {
-                indices.rol = idx;
-            } else if (hStr.includes('grupo') || hStr.includes('patrulla') || hStr.includes('equipo') || hStr === 'gr') {
-                indices.grupo = idx;
-            }
-        });
-        
-        // 3. Procesar las filas de datos a partir de la fila siguiente a las cabeceras
+
+        if (headerRowIndex !== -1 && headers.length > 0) {
+            headers.forEach((h, idx) => {
+                const hNorm = normalizeStr(h);
+                if (!hNorm) return;
+                
+                if ((hNorm.includes('apellido') && hNorm.includes('nombre')) || 
+                    hNorm.includes('nombre completo') || hNorm.includes('circulista') || 
+                    hNorm.includes('participante') || hNorm.includes('integrante') || 
+                    hNorm.includes('socio') || hNorm.includes('persona')) {
+                    indices.apellido_y_nombre = idx;
+                } else if (hNorm.includes('apellido') || hNorm === 'last name' || hNorm === 'surname') {
+                    indices.apellido = idx;
+                } else if (hNorm.includes('nombre') || hNorm === 'first name' || hNorm === 'given name') {
+                    indices.nombre = idx;
+                } else if (hNorm.includes('nac') || hNorm.includes('birth') || (hNorm.includes('fecha') && !hNorm.includes('inicio') && !hNorm.includes('fin') && !hNorm.includes('creacion') && !hNorm.includes('registro'))) {
+                    indices.fecha_nacimiento = idx;
+                } else if (hNorm.includes('cel') || hNorm.includes('tel') || hNorm.includes('phone') || hNorm.includes('movil') || hNorm.includes('contacto') || hNorm.includes('whatsapp')) {
+                    indices.celular = idx;
+                } else if (hNorm.includes('mail') || hNorm.includes('email') || hNorm.includes('correo')) {
+                    indices.email = idx;
+                } else if (hNorm.includes('domicilio') || hNorm.includes('direccion') || hNorm === 'calle' || hNorm === 'address') {
+                    indices.domicilio = idx;
+                } else if (hNorm.includes('localidad') || hNorm.includes('ciudad') || hNorm.includes('barrio') || hNorm.includes('municipio')) {
+                    indices.localidad = idx;
+                } else if (hNorm.includes('provincia') || hNorm === 'estado') {
+                    indices.provincia = idx;
+                } else if (hNorm.includes('rol') || hNorm === 'role' || hNorm.includes('funcion') || hNorm.includes('puesto')) {
+                    indices.rol = idx;
+                } else if (hNorm.includes('grupo') || hNorm.includes('patrulla') || hNorm.includes('equipo') || hNorm === 'gr') {
+                    indices.grupo = idx;
+                }
+            });
+        }
+
+        // Si no se encontró mapeo directo de nombre o apellido por cabecera, usar fallback posicional
+        if (indices.apellido === -1 && indices.nombre === -1 && indices.apellido_y_nombre === -1) {
+            headerRowIndex = -1;
+            indices.apellido = 0;
+            indices.nombre = 1;
+            indices.fecha_nacimiento = 2;
+            indices.celular = 3;
+            indices.email = 4;
+            indices.domicilio = 5;
+            indices.localidad = 6;
+            indices.provincia = 7;
+            indices.rol = 8;
+            indices.grupo = 9;
+        }
+
         const parsedRows = [];
-        for (let i = headerRowIndex + 1; i < rows.length; i++) {
+        const startIdx = headerRowIndex !== -1 ? headerRowIndex + 1 : 0;
+        
+        for (let i = startIdx; i < rows.length; i++) {
             const row = rows[i];
-            if (!row || row.length === 0) continue;
+            if (!row || !Array.isArray(row) || row.length === 0) continue;
             
-            // Ignorar filas vacías o con muy pocos datos (totales, observaciones sueltas, etc.)
-            const cellCount = row.filter(c => String(c || '').trim().length > 0).length;
-            if (cellCount <= 1) continue; 
-            
-            // Ignorar textos recurrentes de firmas o pie de página
+            const nonCount = row.filter(c => String(c || '').trim().length > 0).length;
+            if (nonCount === 0) continue;
+
             const rowText = row.join(' ').toLowerCase();
-            if (rowText.includes('movimiento círculos') || rowText.includes('casa del circulista') || rowText.includes('jesús te espera') || rowText.includes('nosotros hemos conocido')) {
+            if (rowText.includes('movimiento circulistas') || rowText.includes('casa del circulista') || rowText.includes('jesus te espera') || rowText.includes('nosotros hemos conocido')) {
                 continue;
             }
-            
+
             let apellido = indices.apellido !== -1 ? String(row[indices.apellido] || '').trim() : '';
             let nombre = indices.nombre !== -1 ? String(row[indices.nombre] || '').trim() : '';
-            
-            // Si apellido y nombre vienen juntos (ej. en circular "APELLIDO Y NOMBRE")
-            if (!apellido && !nombre && indices.apellido_y_nombre !== -1) {
+
+            // Si apellido o nombre viene en columna unificada (ej. "Agustín Bermúdez" o "Bermúdez, Agustín")
+            if ((!apellido || !nombre) && indices.apellido_y_nombre !== -1) {
                 const fullname = String(row[indices.apellido_y_nombre] || '').trim();
                 if (fullname) {
-                    const commaIndex = fullname.indexOf(',');
-                    if (commaIndex !== -1) {
-                        // Formato: "Alvarez, María Alejandra"
-                        apellido = fullname.substring(0, commaIndex).trim();
-                        nombre = fullname.substring(commaIndex + 1).trim();
-                    } else {
-                        // Formato: "Alvarez María Alejandra" (separado por espacio)
-                        const words = fullname.split(/\s+/);
-                        if (words.length >= 2) {
-                            apellido = words[0];
-                            nombre = words.slice(1).join(' ');
-                        } else {
-                            apellido = fullname;
-                        }
-                    }
+                    const parsedName = splitNombreYApellido(fullname);
+                    if (!apellido) apellido = parsedName.apellido;
+                    if (!nombre) nombre = parsedName.nombre;
                 }
             }
-            
-            // Si no tiene nombre ni apellido mínimo, ignoramos la fila
+
+            // Fallback si no se detectaron apellido ni nombre explícitos en las columnas designadas
+            if (!nombre && !apellido) {
+                const textCells = row.map(c => String(c || '').trim()).filter(c => c.length > 1 && !c.includes('@') && !/^\+?\d[\d\s-]{6,}$/.test(c));
+                if (textCells.length > 0) {
+                    const candidateName = textCells[0];
+                    const parsedName = splitNombreYApellido(candidateName);
+                    apellido = parsedName.apellido;
+                    nombre = parsedName.nombre;
+                }
+            }
+
             if (!nombre && !apellido) continue;
-            
-            // Procesamiento de fechas
+
+            const lowerAp = apellido.toLowerCase();
+            const lowerNom = nombre.toLowerCase();
+            if (lowerAp === 'apellido' || lowerNom === 'nombre' || lowerAp === 'apellidos' || lowerNom === 'nombres') {
+                continue;
+            }
+
             let fecha_nacimiento = '';
             let sin_anio_nacimiento = false;
             if (indices.fecha_nacimiento !== -1 && row[indices.fecha_nacimiento]) {
                 const rawDate = row[indices.fecha_nacimiento];
                 if (rawDate instanceof Date || (rawDate && typeof rawDate.getMonth === 'function')) {
-                    // Si ya es un objeto Date de JS (evitamos desfases de zona horaria usando UTC)
                     let yyyy = rawDate.getUTCFullYear();
                     let mm = String(rawDate.getUTCMonth() + 1).padStart(2, '0');
                     let dd = String(rawDate.getUTCDate()).padStart(2, '0');
@@ -450,7 +532,7 @@
                     sin_anio_nacimiento = res.sinAnio;
                 }
             }
-            
+
             const celular = indices.celular !== -1 ? String(row[indices.celular] || '').trim() : '';
             const email = indices.email !== -1 ? String(row[indices.email] || '').trim() : '';
             const domicilio = indices.domicilio !== -1 ? String(row[indices.domicilio] || '').trim() : '';
@@ -458,7 +540,7 @@
             const provincia = indices.provincia !== -1 ? String(row[indices.provincia] || '').trim() : '';
             const rol = indices.rol !== -1 ? String(row[indices.rol] || '').trim() : '';
             const grupo = indices.grupo !== -1 ? String(row[indices.grupo] || '').trim() : '';
-            
+
             parsedRows.push({
                 apellido,
                 nombre,
@@ -473,7 +555,7 @@
                 grupo
             });
         }
-        
+
         return parsedRows;
     }
 
@@ -1095,7 +1177,7 @@
 
     // Descargar plantilla Excel modelo
     function descargarPlantilla() {
-        const headers = [['Apellido', 'Nombre', 'Fecha Nacimiento', 'Celular', 'Email', 'Domicilio', 'Localidad', 'Provincia', 'Rol', 'Grupo']];
+        const headers = [['Apellido', 'Nombre', 'Fecha Nacimiento', 'Celular', 'Email', 'Domicilio', 'Localidad', 'Provincia', 'Rol', 'Grupo / Patrulla']];
         let data = [];
         let filename = 'plantilla_importacion_mcj.xlsx';
         let sheetName = 'Plantilla Importación';
@@ -1113,7 +1195,7 @@
                 return [
                     r.apellido || '',
                     r.nombre || '',
-                    r.fecha_nacimiento || '',
+                    formatToDDMMYYYY(r.fecha_nacimiento, r.sin_anio_nacimiento),
                     r.celular || '',
                     r.email || '',
                     r.domicilio || '',
@@ -1125,9 +1207,9 @@
             });
         } else {
             data = [
-                ['Pérez', 'Juan Carlos', '1995-05-15', '2641234567', 'juanperez@example.com', 'Av. Libertador 1234', 'Capital', 'San Juan', 'Circulista', 'San Pedro'],
-                ['Gómez', 'María Alejandra', '1988-12-08', '2647654321', 'mariagomez@example.com', 'Calle Mitre 456', 'Rivadavia', 'San Juan', 'Rector', 'Cocinera'],
-                ['Sánchez', 'Carlos Raúl', '1990-07-22', '', '', '', '', '', 'Asesor', '']
+                ['Pérez', 'Juan Carlos', '15/05/1995', '2641234567', 'juanperez@example.com', 'Av. Libertador 1234', 'Capital', 'San Juan', 'Circulista', 'San Pedro'],
+                ['Gómez', 'María Alejandra', '08/12/1988', '2647654321', 'mariagomez@example.com', 'Calle Mitre 456', 'Rivadavia', 'San Juan', 'Rector', 'Cocinera'],
+                ['Sánchez', 'Carlos Raúl', '22/07/1990', '2648889999', 'csanchez@example.com', 'Av. España 789', 'Rawson', 'San Juan', 'Asesor', 'Grupo 1']
             ];
         }
         
@@ -1144,8 +1226,8 @@
             { wch: 25 }, // Domicilio
             { wch: 15 }, // Localidad
             { wch: 15 }, // Provincia
-            { wch: 12 }, // Rol
-            { wch: 15 }  // Grupo
+            { wch: 14 }, // Rol
+            { wch: 18 }  // Grupo / Patrulla
         ];
         
         XLSX.utils.book_append_sheet(wb, ws, sheetName);
