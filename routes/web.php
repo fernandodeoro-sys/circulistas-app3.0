@@ -76,6 +76,8 @@ Route::middleware('auth')->group(function () {
     // ----------------------------------------------------
     Route::middleware('role:administrador,supervisor')->group(function () {
         Route::get('busqueda-avanzada', [BusquedaController::class, 'index'])->name('busqueda.avanzada');
+        Route::get('busqueda-avanzada/exportar', [BusquedaController::class, 'exportar'])->name('busqueda.exportar');
+        Route::get('busqueda-avanzada/imprimir', [BusquedaController::class, 'imprimir'])->name('busqueda.imprimir');
         Route::get('busqueda-persona', [BusquedaController::class, 'busquedaPersona'])->name('busqueda.persona');
         Route::resource('participaciones', ParticipacionController::class)->only(['store', 'update', 'destroy']);
     });

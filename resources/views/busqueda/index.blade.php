@@ -129,14 +129,17 @@
         <div class="flex items-center gap-2 no-print">
             <span class="text-xs text-slate-400 font-medium">Exportar:</span>
             <button onclick="exportToCSV()" 
+                    title="Exportar todos los resultados a CSV"
                     class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer">
                 CSV
             </button>
             <button onclick="exportToExcel()" 
+                    title="Exportar todos los resultados a Excel"
                     class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-600 shadow-sm transition hover:bg-slate-50 cursor-pointer">
                 Excel
             </button>
             <button onclick="exportToPDF()" 
+                    title="Imprimir / Guardar en PDF todos los resultados"
                     class="inline-flex items-center justify-center rounded-lg bg-indigo-50 border border-indigo-100 px-2.5 py-1.5 text-xs font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-100 cursor-pointer">
                 PDF
             </button>
@@ -163,6 +166,7 @@
                     <tr>
                         <th scope="col" class="py-4 pl-6 pr-3">Circulista</th>
                         <th scope="col" class="px-3 py-4">Evento</th>
+                        <th scope="col" class="px-3 py-4">Fecha del Evento</th>
                         <th scope="col" class="px-3 py-4">Rol desempeñado</th>
                         <th scope="col" class="px-3 py-4">Grupo</th>
                         <th scope="col" class="px-3 py-4">Observaciones</th>
@@ -194,6 +198,22 @@
                                     {{ $participacion->evento->tipoEvento->nombre ?? 'Retiro' }} #{{ $participacion->evento->numero_evento }}
                                 </a>
                                 <span class="text-xs font-normal text-slate-500 block">{{ $participacion->evento->lugar }}</span>
+                            </td>
+
+                            <!-- Fecha del Evento -->
+                            <td class="whitespace-nowrap px-3 py-4 text-sm text-slate-700">
+                                @if($participacion->evento?->fecha_inicio)
+                                    <div class="font-medium text-slate-800">
+                                        {{ $participacion->evento->fecha_inicio->format('d/m/Y') }}
+                                    </div>
+                                    @if($participacion->evento->fecha_fin && $participacion->evento->fecha_fin->ne($participacion->evento->fecha_inicio))
+                                        <div class="text-xs text-slate-400">
+                                            al {{ $participacion->evento->fecha_fin->format('d/m/Y') }}
+                                        </div>
+                                    @endif
+                                @else
+                                    <span class="text-slate-400">—</span>
+                                @endif
                             </td>
 
                             <!-- Rol -->
@@ -241,117 +261,28 @@
 </div>
 
 <script>
-function getTableData() {
-    const table = document.querySelector('#resultados-card table');
-    if (!table) return null;
-
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
-
-    const data = rows.map(row => {
-        const cols = Array.from(row.querySelectorAll('td'));
-        
-        // Columna 1: Circulista
-        const nameLink = cols[0].querySelector('a');
-        const name = nameLink ? nameLink.textContent.trim() : cols[0].textContent.trim();
-        const contactDiv = cols[0].querySelector('div.text-xs');
-        const contact = contactDiv ? contactDiv.textContent.trim() : '';
-        const fullCirculista = contact ? `${name} (${contact})` : name;
-
-        // Columna 2: Evento
-        const eventLink = cols[1].querySelector('a');
-        const event = eventLink ? eventLink.textContent.trim() : cols[1].textContent.trim();
-        const placeSpan = cols[1].querySelector('span');
-        const place = placeSpan ? placeSpan.textContent.trim() : '';
-        const fullEvent = place ? `${event} (${place})` : event;
-
-        // Columna 3: Rol
-        const rolSpan = cols[2].querySelector('span');
-        const rol = rolSpan ? rolSpan.textContent.trim() : cols[2].textContent.trim();
-
-        // Columna 4: Grupo
-        const grupo = cols[3].textContent.trim();
-
-        // Columna 5: Observaciones
-        const obs = cols[4].textContent.trim();
-
-        return [fullCirculista, fullEvent, rol, grupo, obs];
-    });
-
-    return { headers, data };
+function getExportQuery(formato) {
+    const params = new URLSearchParams(window.location.search);
+    params.delete('page');
+    if (formato) {
+        params.set('formato', formato);
+    }
+    return params.toString();
 }
 
 function exportToCSV() {
-    const tableData = getTableData();
-    if (!tableData) return;
-
-    let csvContent = "";
-    csvContent += tableData.headers.join(";") + "\n";
-    tableData.data.forEach(row => {
-        const cleanRow = row.map(val => {
-            let cleanVal = val.replace(/"/g, '""');
-            return `"${cleanVal}"`;
-        });
-        csvContent += cleanRow.join(";") + "\n";
-    });
-
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `resultados_busqueda_avanzada.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const query = getExportQuery('csv');
+    window.location.href = `{{ route('busqueda.exportar') }}?${query}`;
 }
 
 function exportToExcel() {
-    const tableData = getTableData();
-    if (!tableData) return;
-
-    let excelContent = `
-    <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
-    <head>
-        <meta charset="utf-8">
-        <style>
-            table { border-collapse: collapse; }
-            th { background-color: #f1f5f9; font-weight: bold; border: 1px solid #cbd5e1; padding: 8px; }
-            td { border: 1px solid #cbd5e1; padding: 8px; }
-        </style>
-    </head>
-    <body>
-        <h2>Resultados de Búsqueda Avanzada - Padrón MCJ</h2>
-        <table>
-            <thead>
-                <tr>
-                    ${tableData.headers.map(h => `<th>${h}</th>`).join('')}
-                </tr>
-            </thead>
-            <tbody>
-                ${tableData.data.map(row => `
-                    <tr>
-                        ${row.map(val => `<td>${val}</td>`).join('')}
-                    </tr>
-                `).join('')}
-            </tbody>
-        </table>
-    </body>
-    </html>`;
-
-    const blob = new Blob(["\uFEFF" + excelContent], { type: 'application/vnd.ms-excel;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `resultados_busqueda_avanzada.xls`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const query = getExportQuery('excel');
+    window.location.href = `{{ route('busqueda.exportar') }}?${query}`;
 }
 
 function exportToPDF() {
-    window.print();
+    const query = getExportQuery();
+    window.open(`{{ route('busqueda.imprimir') }}?${query}`, '_blank');
 }
 </script>
 
